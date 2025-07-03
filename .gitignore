@@ -3,4 +3,5 @@ build/
 .vscode/settings.json
 .vscode/c_cpp_properties.json
 .mxproject
-debug.jdebug.user
+.jdebug.user
+.jdebug
