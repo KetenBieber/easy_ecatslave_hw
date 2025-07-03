@@ -1,0 +1,6 @@
+# 编译生成的临时文件和目录
+build/
+.vscode/settings.json
+.vscode/c_cpp_properties.json
+.mxproject
+debug.jdebug.user

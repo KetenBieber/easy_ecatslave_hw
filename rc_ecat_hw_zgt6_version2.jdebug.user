@@ -1,0 +1,33 @@
+
+GraphedExpression="(can1Queue).head", DisplayFormat=DISPLAY_FORMAT_DEC, Color=#a00909
+GraphedExpression="(can1Queue).tail", DisplayFormat=DISPLAY_FORMAT_DEC, Color=#09a01b
+OpenDocument="main.c", FilePath="/home/keten/rc_ecat_zgt6_hw_version2/App/main.c", Line=44
+OpenDocument="stm32f4xx_hal_can.c", FilePath="/home/keten/rc_ecat_zgt6_hw_version2/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c", Line=1413
+OpenDocument="ecat_app.c", FilePath="/home/keten/rc_ecat_zgt6_hw_version2/App/ecat_app.c", Line=6
+OpenDocument="startup_stm32f407xx.s", FilePath="/home/keten/rc_ecat_zgt6_hw_version2/startup_stm32f407xx.s", Line=52
+OpenToolbar="Debug", Floating=0, x=0, y=0
+OpenWindow="Call Stack", DockArea=RIGHT, x=0, y=1, w=864, h=251, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Registers 1", DockArea=RIGHT, x=0, y=4, w=864, h=115, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, FilteredItems=[], RefreshRate=1
+OpenWindow="Source Files", DockArea=LEFT, x=0, y=1, w=1492, h=157, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Disassembly", DockArea=RIGHT, x=0, y=0, w=864, h=103, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Memory 1", DockArea=BOTTOM, x=1, y=0, w=1364, h=332, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, EditorAddress=0x0
+OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=2, w=1492, h=675, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Functions", DockArea=LEFT, x=0, y=0, w=1492, h=181, TabPos=1, TopOfStack=0, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Data Sampling", DockArea=LEFT, x=0, y=0, w=1492, h=181, TabPos=0, TopOfStack=1, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, VisibleTab=0, UniformSampleSpacing=0
+OpenWindow="Timeline", DockArea=RIGHT, x=0, y=2, w=864, h=472, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=1, DataPaneShown=1, PowerPaneShown=0, CodePaneShown=0, PinCursor="Cursor Movable", TimePerDiv="50 ms / Div", TimeStampFormat="Time", DataGraphDrawAsPoints=0, DataGraphLegendShown=1, DataGraphUniformSampleSpacing=0, DataGraphLegendPosition="494;0", PowerGraphDrawAsPoints=0, PowerGraphLegendShown=0, PowerGraphAvgFilterTime=Off, PowerGraphAvgFilterLen=Off, PowerGraphUniformSampleSpacing=0, PowerGraphLegendPosition="569;0", CodeGraphLegendShown=0, CodeGraphLegendPosition="593;0"
+OpenWindow="Console", DockArea=BOTTOM, x=0, y=0, w=1366, h=332, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="RTOS", DockArea=RIGHT, x=0, y=3, w=864, h=91, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, Showing=""
+TableHeader="Functions", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Address";"Size";"#Insts";"Source"], ColWidths=[2828;140;100;100;434]
+TableHeader="Call Stack", SortCol="Function", SortOrder="ASCENDING", VisibleCols=["Function";"Stack Frame";"Source";"PC";"Return Address";"Stack Used"], ColWidths=[336;210;392;140;322;135]
+TableHeader="Source Files", SortCol="File", SortOrder="ASCENDING", VisibleCols=["File";"Status";"Size";"#Insts";"Path"], ColWidths=[442;126;100;100;1400]
+TableHeader="Data Sampling Table", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";" (can1Queue).head";" (can1Queue).tail"], ColWidths=[100;100;100;1177]
+TableHeader="Data Sampling Setup", SortCol="Type", SortOrder="ASCENDING", VisibleCols=["Expression";"Type";"Value";"Min";"Max";"Average";"# Changes";"Min. Change";"Max. Change"], ColWidths=[238;322;100;100;100;154;168;196;168]
+TableHeader="Power Sampling", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";"Ch 0"], ColWidths=[100;100;100]
+TableHeader="Registers 1", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Description"], ColWidths=[106;196;547]
+TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh"], ColWidths=[131;100;103;1158]
+TableHeader="RegisterSelectionDialog", SortCol="None", SortOrder="ASCENDING", VisibleCols=[], ColWidths=[]
+TableHeader="TargetExceptionDialog", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Address";"Description"], ColWidths=[26;26;26;36]
+WatchedExpression="can0Queue", RefreshRate=5, Window=Watched Data 1
+WatchedExpression="can1Queue", RefreshRate=5, Window=Watched Data 1
+WatchedExpression="can0_tx_err_cnt", RefreshRate=5, Window=Watched Data 1
+WatchedExpression="can1_tx_err_cnt", RefreshRate=5, Window=Watched Data 1
