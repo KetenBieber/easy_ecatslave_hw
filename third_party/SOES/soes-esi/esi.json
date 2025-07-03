@@ -1,0 +1,1005 @@
+{
+  "form": {
+    "VendorName": "rc_ecat",
+    "VendorID": "0x000",
+    "ProductCode": "0x00ab123",
+    "ProfileNo": "5001",
+    "RevisionNumber": "0x002",
+    "SerialNumber": "0x001",
+    "HWversion": "0.0.1",
+    "SWversion": "0.0.1",
+    "EEPROMsize": "2048",
+    "RxMailboxOffset": "0x1000",
+    "TxMailboxOffset": "0x1200",
+    "MailboxSize": "512",
+    "SM2Offset": "0x1600",
+    "SM3Offset": "0x1A00",
+    "TextGroupType": "rc_ecat",
+    "TextGroupName5": "rc_ecat",
+    "ImageName": "IMGCBY",
+    "TextDeviceType": "DigIn2000",
+    "TextDeviceName": "rc_ecat",
+    "Port0Physical": "Y",
+    "Port1Physical": "Y",
+    "Port2Physical": " ",
+    "Port3Physical": " ",
+    "ESC": "LAN9252",
+    "SPImode": "0",
+    "CoeDetailsEnableSDO": true,
+    "CoeDetailsEnableSDOInfo": true,
+    "CoeDetailsEnablePDOAssign": false,
+    "CoeDetailsEnablePDOConfiguration": false,
+    "CoeDetailsEnableUploadAtStartup": true,
+    "CoeDetailsEnableSDOCompleteAccess": true,
+    "DetailsEnableUseFoE": false
+  },
+  "od": {
+    "sdo": {},
+    "txpdo": {
+      "6000": {
+        "otype": "RECORD",
+        "name": "input_io",
+        "access": "RO",
+        "items": [
+          {
+            "name": "Max SubIndex"
+          },
+          {
+            "name": "io1",
+            "dtype": "BOOLEAN",
+            "value": "0",
+            "data": "&Obj.input_io.io1",
+            "access": "RO"
+          },
+          {
+            "name": "io2",
+            "dtype": "BOOLEAN",
+            "value": "0",
+            "access": "RO",
+            "data": "&Obj.input_io.io2"
+          },
+          {
+            "name": "io3",
+            "dtype": "BOOLEAN",
+            "value": "0",
+            "access": "RO",
+            "data": "&Obj.input_io.io3"
+          },
+          {
+            "name": "io4",
+            "dtype": "BOOLEAN",
+            "value": "0",
+            "access": "RO",
+            "data": "&Obj.input_io.io4"
+          },
+          {
+            "name": "io5",
+            "dtype": "BOOLEAN",
+            "value": "0",
+            "access": "RO",
+            "data": "&Obj.input_io.io5"
+          },
+          {
+            "name": "io6",
+            "dtype": "BOOLEAN",
+            "value": "0",
+            "access": "RO",
+            "data": "&Obj.input_io.io6"
+          },
+          {
+            "name": "io7",
+            "dtype": "BOOLEAN",
+            "value": "0",
+            "access": "RO",
+            "data": "&Obj.input_io.io7"
+          },
+          {
+            "name": "io8",
+            "dtype": "BOOLEAN",
+            "value": "0",
+            "access": "RO",
+            "data": "&Obj.input_io.io8"
+          }
+        ],
+        "pdo_mappings": [
+          "txpdo"
+        ]
+      },
+      "6001": {
+        "otype": "ARRAY",
+        "name": "can0_motor_positions",
+        "access": "RO",
+        "dtype": "INTEGER16",
+        "items": [
+          {
+            "name": "Max SubIndex"
+          },
+          {
+            "name": "id1",
+            "value": "0",
+            "data": "&Obj.can0_motor_positions[0]"
+          },
+          {
+            "name": "id2",
+            "value": "0",
+            "data": "&Obj.can0_motor_positions[1]"
+          },
+          {
+            "name": "id3",
+            "value": "0",
+            "data": "&Obj.can0_motor_positions[2]"
+          },
+          {
+            "name": "id4",
+            "value": "0",
+            "data": "&Obj.can0_motor_positions[3]"
+          },
+          {
+            "name": "id5",
+            "value": "0",
+            "data": "&Obj.can0_motor_positions[4]"
+          },
+          {
+            "name": "id6",
+            "value": "0",
+            "data": "&Obj.can0_motor_positions[5]"
+          },
+          {
+            "name": "id7",
+            "value": "0",
+            "data": "&Obj.can0_motor_positions[6]"
+          },
+          {
+            "name": "id8",
+            "value": "0",
+            "data": "&Obj.can0_motor_positions[7]"
+          }
+        ],
+        "pdo_mappings": [
+          "txpdo"
+        ]
+      },
+      "6002": {
+        "otype": "ARRAY",
+        "name": "can0_motor_velocities",
+        "access": "RO",
+        "dtype": "INTEGER16",
+        "items": [
+          {
+            "name": "Max SubIndex"
+          },
+          {
+            "name": "id1",
+            "value": "0",
+            "data": "&Obj.can0_motor_velocities[0]"
+          },
+          {
+            "name": "id2",
+            "value": "0",
+            "data": "&Obj.can0_motor_velocities[1]"
+          },
+          {
+            "name": "id3",
+            "value": "0",
+            "data": "&Obj.can0_motor_velocities[2]"
+          },
+          {
+            "name": "id4",
+            "value": "0",
+            "data": "&Obj.can0_motor_velocities[3]"
+          },
+          {
+            "name": "id5",
+            "value": "0",
+            "data": "&Obj.can0_motor_velocities[4]"
+          },
+          {
+            "name": "id6",
+            "value": "0",
+            "data": "&Obj.can0_motor_velocities[5]"
+          },
+          {
+            "name": "id7",
+            "value": "0",
+            "data": "&Obj.can0_motor_velocities[6]"
+          },
+          {
+            "name": "id8",
+            "value": "0",
+            "data": "&Obj.can0_motor_velocities[7]"
+          }
+        ],
+        "pdo_mappings": [
+          "txpdo"
+        ]
+      },
+      "6003": {
+        "otype": "ARRAY",
+        "name": "can0_motor_currents",
+        "access": "RO",
+        "dtype": "INTEGER16",
+        "items": [
+          {
+            "name": "Max SubIndex"
+          },
+          {
+            "name": "id1",
+            "value": "0",
+            "data": "&Obj.can0_motor_currents[0]"
+          },
+          {
+            "name": "id2",
+            "value": "0",
+            "data": "&Obj.can0_motor_currents[1]"
+          },
+          {
+            "name": "id3",
+            "value": "0",
+            "data": "&Obj.can0_motor_currents[2]"
+          },
+          {
+            "name": "id4",
+            "value": "0",
+            "data": "&Obj.can0_motor_currents[3]"
+          },
+          {
+            "name": "id5",
+            "value": "0",
+            "data": "&Obj.can0_motor_currents[4]"
+          },
+          {
+            "name": "id6",
+            "value": "0",
+            "data": "&Obj.can0_motor_currents[5]"
+          },
+          {
+            "name": "id7",
+            "value": "0",
+            "data": "&Obj.can0_motor_currents[6]"
+          },
+          {
+            "name": "id8",
+            "value": "0",
+            "data": "&Obj.can0_motor_currents[7]"
+          }
+        ],
+        "pdo_mappings": [
+          "txpdo"
+        ]
+      },
+      "6004": {
+        "otype": "ARRAY",
+        "name": "can0_motor_temperatures",
+        "access": "RO",
+        "dtype": "UNSIGNED8",
+        "items": [
+          {
+            "name": "Max SubIndex"
+          },
+          {
+            "name": "id1",
+            "value": "0",
+            "data": "&Obj.can0_motor_temperatures[0]"
+          },
+          {
+            "name": "id2",
+            "value": "0",
+            "data": "&Obj.can0_motor_temperatures[1]"
+          },
+          {
+            "name": "id3",
+            "value": "0",
+            "data": "&Obj.can0_motor_temperatures[2]"
+          },
+          {
+            "name": "id4",
+            "value": "0",
+            "data": "&Obj.can0_motor_temperatures[3]"
+          },
+          {
+            "name": "id5",
+            "value": "0",
+            "data": "&Obj.can0_motor_temperatures[4]"
+          },
+          {
+            "name": "id6",
+            "value": "0",
+            "data": "&Obj.can0_motor_temperatures[5]"
+          },
+          {
+            "name": "id7",
+            "value": "0",
+            "data": "&Obj.can0_motor_temperatures[6]"
+          },
+          {
+            "name": "id8",
+            "value": "0",
+            "data": "&Obj.can0_motor_temperatures[7]"
+          }
+        ],
+        "pdo_mappings": [
+          "txpdo"
+        ]
+      },
+      "6005": {
+        "otype": "ARRAY",
+        "name": "can1_motor_positions",
+        "access": "RO",
+        "dtype": "INTEGER16",
+        "items": [
+          {
+            "name": "Max SubIndex"
+          },
+          {
+            "name": "id1",
+            "value": "0",
+            "data": "&Obj.can1_motor_positions[0]"
+          },
+          {
+            "name": "id2",
+            "value": "0",
+            "data": "&Obj.can1_motor_positions[1]"
+          },
+          {
+            "name": "id3",
+            "value": "0",
+            "data": "&Obj.can1_motor_positions[2]"
+          },
+          {
+            "name": "id4",
+            "value": "0",
+            "data": "&Obj.can1_motor_positions[3]"
+          },
+          {
+            "name": "id5",
+            "value": "0",
+            "data": "&Obj.can1_motor_positions[4]"
+          },
+          {
+            "name": "id6",
+            "value": "0",
+            "data": "&Obj.can1_motor_positions[5]"
+          },
+          {
+            "name": "id7",
+            "value": "0",
+            "data": "&Obj.can1_motor_positions[6]"
+          },
+          {
+            "name": "id8",
+            "value": "0",
+            "data": "&Obj.can1_motor_positions[7]"
+          }
+        ],
+        "pdo_mappings": [
+          "txpdo"
+        ]
+      },
+      "6006": {
+        "otype": "ARRAY",
+        "name": "can1_motor_velocities",
+        "access": "RO",
+        "dtype": "INTEGER16",
+        "items": [
+          {
+            "name": "Max SubIndex"
+          },
+          {
+            "name": "id1",
+            "value": "0",
+            "data": "&Obj.can1_motor_velocities[0]"
+          },
+          {
+            "name": "id2",
+            "value": "0",
+            "data": "&Obj.can1_motor_velocities[1]"
+          },
+          {
+            "name": "id3",
+            "value": "0",
+            "data": "&Obj.can1_motor_velocities[2]"
+          },
+          {
+            "name": "id4",
+            "value": "0",
+            "data": "&Obj.can1_motor_velocities[3]"
+          },
+          {
+            "name": "id5",
+            "value": "0",
+            "data": "&Obj.can1_motor_velocities[4]"
+          },
+          {
+            "name": "id6",
+            "value": "0",
+            "data": "&Obj.can1_motor_velocities[5]"
+          },
+          {
+            "name": "id7",
+            "value": "0",
+            "data": "&Obj.can1_motor_velocities[6]"
+          },
+          {
+            "name": "id8",
+            "value": "0",
+            "data": "&Obj.can1_motor_velocities[7]"
+          }
+        ],
+        "pdo_mappings": [
+          "txpdo"
+        ]
+      },
+      "6007": {
+        "otype": "ARRAY",
+        "name": "can1_motor_currents",
+        "access": "RO",
+        "dtype": "UNSIGNED16",
+        "items": [
+          {
+            "name": "Max SubIndex"
+          },
+          {
+            "name": "id1",
+            "value": "0",
+            "data": "&Obj.can1_motor_currents[0]"
+          },
+          {
+            "name": "id2",
+            "value": "0",
+            "data": "&Obj.can1_motor_currents[1]"
+          },
+          {
+            "name": "id3",
+            "value": "0",
+            "data": "&Obj.can1_motor_currents[2]"
+          },
+          {
+            "name": "id4",
+            "value": "0",
+            "data": "&Obj.can1_motor_currents[3]"
+          },
+          {
+            "name": "id5",
+            "value": "0",
+            "data": "&Obj.can1_motor_currents[4]"
+          },
+          {
+            "name": "id6",
+            "value": "0",
+            "data": "&Obj.can1_motor_currents[5]"
+          },
+          {
+            "name": "id7",
+            "value": "0",
+            "data": "&Obj.can1_motor_currents[6]"
+          },
+          {
+            "name": "id8",
+            "value": "0",
+            "data": "&Obj.can1_motor_currents[7]"
+          }
+        ],
+        "pdo_mappings": [
+          "txpdo"
+        ]
+      },
+      "6008": {
+        "otype": "ARRAY",
+        "name": "can1_motor_temperatures",
+        "access": "RO",
+        "dtype": "UNSIGNED8",
+        "items": [
+          {
+            "name": "Max SubIndex"
+          },
+          {
+            "name": "id1",
+            "value": "0",
+            "data": "&Obj.can1_motor_temperatures[0]"
+          },
+          {
+            "name": "id2",
+            "value": "0",
+            "data": "&Obj.can1_motor_temperatures[1]"
+          },
+          {
+            "name": "id3",
+            "value": "0",
+            "data": "&Obj.can1_motor_temperatures[2]"
+          },
+          {
+            "name": "id4",
+            "value": "0",
+            "data": "&Obj.can1_motor_temperatures[3]"
+          },
+          {
+            "name": "id5",
+            "value": "0",
+            "data": "&Obj.can1_motor_temperatures[4]"
+          },
+          {
+            "name": "id6",
+            "value": "0",
+            "data": "&Obj.can1_motor_temperatures[5]"
+          },
+          {
+            "name": "id7",
+            "value": "0",
+            "data": "&Obj.can1_motor_temperatures[6]"
+          },
+          {
+            "name": "id8",
+            "value": "0",
+            "data": "&Obj.can1_motor_temperatures[7]"
+          }
+        ],
+        "pdo_mappings": [
+          "txpdo"
+        ]
+      },
+      "6009": {
+        "otype": "ARRAY",
+        "name": "vesc_can0_motor_velocities",
+        "access": "RO",
+        "dtype": "INTEGER32",
+        "items": [
+          {
+            "name": "Max SubIndex"
+          },
+          {
+            "name": "id1",
+            "value": "0",
+            "data": "&Obj.vesc_can0_motor_velocities[0]"
+          },
+          {
+            "name": "id2",
+            "value": "0",
+            "data": "&Obj.vesc_can0_motor_velocities[1]"
+          },
+          {
+            "name": "id3",
+            "value": "0",
+            "data": "&Obj.vesc_can0_motor_velocities[2]"
+          },
+          {
+            "name": "id4",
+            "value": "0",
+            "data": "&Obj.vesc_can0_motor_velocities[3]"
+          },
+          {
+            "name": "id5",
+            "value": "0",
+            "data": "&Obj.vesc_can0_motor_velocities[4]"
+          },
+          {
+            "name": "id6",
+            "value": "0",
+            "data": "&Obj.vesc_can0_motor_velocities[5]"
+          }
+        ],
+        "pdo_mappings": [
+          "txpdo"
+        ]
+      },
+      "600A": {
+        "otype": "ARRAY",
+        "name": "vesc_can1_motor_velocities",
+        "access": "RO",
+        "dtype": "INTEGER32",
+        "items": [
+          {
+            "name": "Max SubIndex"
+          },
+          {
+            "name": "id1",
+            "value": "0",
+            "data": "&Obj.vesc_can1_motor_velocities[0]"
+          },
+          {
+            "name": "id2",
+            "value": "0",
+            "data": "&Obj.vesc_can1_motor_velocities[1]"
+          },
+          {
+            "name": "id3",
+            "value": "0",
+            "data": "&Obj.vesc_can1_motor_velocities[2]"
+          },
+          {
+            "name": "id4",
+            "value": "0",
+            "data": "&Obj.vesc_can1_motor_velocities[3]"
+          },
+          {
+            "name": "id5",
+            "value": "0",
+            "data": "&Obj.vesc_can1_motor_velocities[4]"
+          },
+          {
+            "name": "id6",
+            "value": "0",
+            "data": "&Obj.vesc_can1_motor_velocities[5]"
+          }
+        ],
+        "pdo_mappings": [
+          "txpdo"
+        ]
+      },
+      "600B": {
+        "otype": "ARRAY",
+        "name": "vesc_can0_motor_currents",
+        "access": "RO",
+        "dtype": "INTEGER32",
+        "items": [
+          {
+            "name": "Max SubIndex"
+          },
+          {
+            "name": "id1",
+            "value": "0",
+            "data": "&Obj.vesc_can0_motor_currents[0]"
+          },
+          {
+            "name": "id2",
+            "value": "0",
+            "data": "&Obj.vesc_can0_motor_currents[1]"
+          },
+          {
+            "name": "id3",
+            "value": "0",
+            "data": "&Obj.vesc_can0_motor_currents[2]"
+          },
+          {
+            "name": "id4",
+            "value": "0",
+            "data": "&Obj.vesc_can0_motor_currents[3]"
+          },
+          {
+            "name": "id5",
+            "value": "0",
+            "data": "&Obj.vesc_can0_motor_currents[4]"
+          },
+          {
+            "name": "id6",
+            "value": "0",
+            "data": "&Obj.vesc_can0_motor_currents[5]"
+          }
+        ],
+        "pdo_mappings": [
+          "txpdo"
+        ]
+      },
+      "600C": {
+        "otype": "ARRAY",
+        "name": "vesc_can1_motor_currents",
+        "access": "RO",
+        "dtype": "INTEGER32",
+        "items": [
+          {
+            "name": "Max SubIndex"
+          },
+          {
+            "name": "id1",
+            "value": "0",
+            "data": "&Obj.vesc_can1_motor_currents[0]"
+          },
+          {
+            "name": "id2",
+            "value": "0",
+            "data": "&Obj.vesc_can1_motor_currents[1]"
+          },
+          {
+            "name": "id3",
+            "value": "0",
+            "data": "&Obj.vesc_can1_motor_currents[2]"
+          },
+          {
+            "name": "id4",
+            "value": "0",
+            "data": "&Obj.vesc_can1_motor_currents[3]"
+          },
+          {
+            "name": "id5",
+            "value": "0",
+            "data": "&Obj.vesc_can1_motor_currents[4]"
+          },
+          {
+            "name": "id6",
+            "value": "0",
+            "data": "&Obj.vesc_can1_motor_currents[5]"
+          }
+        ],
+        "pdo_mappings": [
+          "txpdo"
+        ]
+      }
+    },
+    "rxpdo": {
+      "7000": {
+        "otype": "RECORD",
+        "name": "output_io",
+        "access": "RO",
+        "items": [
+          {
+            "name": "Max SubIndex"
+          },
+          {
+            "name": "io1",
+            "dtype": "BOOLEAN",
+            "value": "0",
+            "data": "&Obj.output_io.io1",
+            "access": "RO"
+          },
+          {
+            "name": "io2",
+            "dtype": "BOOLEAN",
+            "value": "0",
+            "access": "RO",
+            "data": "&Obj.output_io.io2"
+          },
+          {
+            "name": "io3",
+            "dtype": "BOOLEAN",
+            "value": "0",
+            "access": "RO",
+            "data": "&Obj.output_io.io3"
+          },
+          {
+            "name": "io4",
+            "dtype": "BOOLEAN",
+            "value": "0",
+            "access": "RO",
+            "data": "&Obj.output_io.io4"
+          },
+          {
+            "name": "io5",
+            "dtype": "BOOLEAN",
+            "value": "0",
+            "access": "RO",
+            "data": "&Obj.output_io.io5"
+          },
+          {
+            "name": "io6",
+            "dtype": "BOOLEAN",
+            "value": "0",
+            "access": "RO",
+            "data": "&Obj.output_io.io6"
+          },
+          {
+            "name": "io7",
+            "dtype": "BOOLEAN",
+            "value": "0",
+            "access": "RO",
+            "data": "&Obj.output_io.io7"
+          },
+          {
+            "name": "io8",
+            "dtype": "BOOLEAN",
+            "value": "0",
+            "access": "RO",
+            "data": "&Obj.output_io.io8"
+          }
+        ],
+        "pdo_mappings": [
+          "rxpdo"
+        ]
+      },
+      "7001": {
+        "otype": "ARRAY",
+        "name": "can0_motor_commands",
+        "access": "RO",
+        "dtype": "INTEGER16",
+        "items": [
+          {
+            "name": "Max SubIndex"
+          },
+          {
+            "name": "id1",
+            "value": "0",
+            "data": "&Obj.can0_motor_commands[0]"
+          },
+          {
+            "name": "id2",
+            "value": "0",
+            "data": "&Obj.can0_motor_commands[1]"
+          },
+          {
+            "name": "id3",
+            "value": "0",
+            "data": "&Obj.can0_motor_commands[2]"
+          },
+          {
+            "name": "id4",
+            "value": "0",
+            "data": "&Obj.can0_motor_commands[3]"
+          },
+          {
+            "name": "id5",
+            "value": "0",
+            "data": "&Obj.can0_motor_commands[4]"
+          },
+          {
+            "name": "id6",
+            "value": "0",
+            "data": "&Obj.can0_motor_commands[5]"
+          },
+          {
+            "name": "id7",
+            "value": "0",
+            "data": "&Obj.can0_motor_commands[6]"
+          },
+          {
+            "name": "id8",
+            "value": "0",
+            "data": "&Obj.can0_motor_commands[7]"
+          }
+        ],
+        "pdo_mappings": [
+          "rxpdo"
+        ]
+      },
+      "7002": {
+        "otype": "ARRAY",
+        "name": "can1_motor_commands",
+        "access": "RO",
+        "dtype": "INTEGER16",
+        "items": [
+          {
+            "name": "Max SubIndex"
+          },
+          {
+            "name": "id1",
+            "value": "0",
+            "data": "&Obj.can1_motor_commands[0]"
+          },
+          {
+            "name": "id2",
+            "value": "0",
+            "data": "&Obj.can1_motor_commands[1]"
+          },
+          {
+            "name": "id3",
+            "value": "0",
+            "data": "&Obj.can1_motor_commands[2]"
+          },
+          {
+            "name": "id4",
+            "value": "0",
+            "data": "&Obj.can1_motor_commands[3]"
+          },
+          {
+            "name": "id5",
+            "value": "0",
+            "data": "&Obj.can1_motor_commands[4]"
+          },
+          {
+            "name": "id6",
+            "value": "0",
+            "data": "&Obj.can1_motor_commands[5]"
+          },
+          {
+            "name": "id7",
+            "value": "0",
+            "data": "&Obj.can1_motor_commands[6]"
+          },
+          {
+            "name": "id8",
+            "value": "0",
+            "data": "&Obj.can1_motor_commands[7]"
+          }
+        ],
+        "pdo_mappings": [
+          "rxpdo"
+        ]
+      },
+      "7003": {
+        "otype": "ARRAY",
+        "name": "vesc_can0_commands",
+        "access": "RO",
+        "dtype": "INTEGER32",
+        "items": [
+          {
+            "name": "Max SubIndex"
+          },
+          {
+            "name": "id1",
+            "value": "0",
+            "data": "&Obj.vesc_can0_commands[0]"
+          },
+          {
+            "name": "id2",
+            "value": "0",
+            "data": "&Obj.vesc_can0_commands[1]"
+          },
+          {
+            "name": "id3",
+            "value": "0",
+            "data": "&Obj.vesc_can0_commands[2]"
+          },
+          {
+            "name": "id4",
+            "value": "0",
+            "data": "&Obj.vesc_can0_commands[3]"
+          },
+          {
+            "name": "id5",
+            "value": "0",
+            "data": "&Obj.vesc_can0_commands[4]"
+          },
+          {
+            "name": "id6",
+            "value": "0",
+            "data": "&Obj.vesc_can0_commands[5]"
+          }
+        ],
+        "pdo_mappings": [
+          "rxpdo"
+        ]
+      },
+      "7004": {
+        "otype": "ARRAY",
+        "name": "vesc_can1_commands",
+        "access": "RO",
+        "dtype": "INTEGER32",
+        "items": [
+          {
+            "name": "Max SubIndex"
+          },
+          {
+            "name": "id1",
+            "value": "0",
+            "data": "&Obj.vesc_can1_commands[0]"
+          },
+          {
+            "name": "id2",
+            "value": "0",
+            "data": "&Obj.vesc_can1_commands[1]"
+          },
+          {
+            "name": "id3",
+            "value": "0",
+            "data": "&Obj.vesc_can1_commands[2]"
+          },
+          {
+            "name": "id4",
+            "value": "0",
+            "data": "&Obj.vesc_can1_commands[3]"
+          },
+          {
+            "name": "id5",
+            "value": "0",
+            "data": "&Obj.vesc_can1_commands[4]"
+          },
+          {
+            "name": "id6",
+            "value": "0",
+            "data": "&Obj.vesc_can1_commands[5]"
+          }
+        ],
+        "pdo_mappings": [
+          "rxpdo"
+        ]
+      }
+    }
+  },
+  "dc": [
+    {
+      "Name": "SM-Synchron",
+      "Description": "SM-Synchron",
+      "AssignActivate": "#x000",
+      "Sync0cycleTime": "0",
+      "Sync0shiftTime": "0",
+      "Sync1cycleTime": "0",
+      "Sync1shiftTime": "0"
+    },
+    {
+      "Name": "DC",
+      "Description": "DC-Synchron",
+      "AssignActivate": "#x300",
+      "Sync0cycleTime": "0",
+      "Sync0shiftTime": "0",
+      "Sync1cycleTime": "0",
+      "Sync1shiftTime": "0"
+    }
+  ]
+}
