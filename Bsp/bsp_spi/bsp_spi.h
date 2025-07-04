@@ -22,6 +22,7 @@ extern "C" {
 #include "esc_config.h"
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_ll_bus.h"
+#include "stm32f4xx_ll_dma.h"
 #include "stm32f4xx_ll_gpio.h"
 #include "stm32f4xx_ll_spi.h"
 

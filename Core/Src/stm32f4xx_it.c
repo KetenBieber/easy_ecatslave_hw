@@ -21,7 +21,7 @@
 #include "stm32f4xx_it.h"
 
 #include "main.h"
-
+#include "stm32f4xx_ll_dma.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* USER CODE END Includes */
@@ -321,6 +321,16 @@ void CAN2_RX1_IRQHandler(void) {
   /* USER CODE BEGIN CAN2_RX1_IRQn 1 */
 
   /* USER CODE END CAN2_RX1_IRQn 1 */
+}
+
+/**
+ * @brief This function handles DMA2 stream3 global interrupt.
+ */
+void DMA2_Stream3_IRQHandler(void) {
+  if (LL_DMA_IsActiveFlag_TC3(DMA2)) {
+    // LL_DMA_ClearFlag_TC3(DMA2);
+    // 处理DMA传输完成的逻辑
+  }
 }
 
 /* USER CODE BEGIN 1 */

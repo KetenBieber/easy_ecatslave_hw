@@ -76,9 +76,11 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE DEBUG)
-    # Debug 模式下可以不做优化或开启额外的调试信息
+
+# Debug 模式下可以不做优化或开启额外的调试信息
 elseif(CMAKE_BUILD_TYPE MATCHES Release)
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE NDEBUG)
+
     # Release 模式下开启优化选项（未写）
 endif()
 
@@ -108,6 +110,9 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
 
     # 使用LL库作为HAL库的底层驱动
     USE_LL_DRIVER
+
+    # 使用DMA的SPI
+    USE_DMA_SPI
 )
 
 # Add linked libraries

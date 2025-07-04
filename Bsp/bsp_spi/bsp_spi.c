@@ -7,6 +7,9 @@
  *
  *       2025-06-24 updata LL library spi
  *
+ *       2025-07-04 update spi dma
+ *
+ *
  * @copyright Copyright (c) 2025
  *
  * @attention :
@@ -16,6 +19,7 @@
 #include "bsp_spi.h"
 
 void spi_setup(void) {
+  spi_dmaisr_init();
   /* SPI Instance relative */
   LL_SPI_InitTypeDef SPI_InitStruct = {0};
   LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -45,6 +49,7 @@ void spi_setup(void) {
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
   LL_GPIO_Init(FLASH_SPI_CS_GPIO_Port, &GPIO_InitStruct);
 
+  spi_dma_configuration();
   /* for spi  */
   SPI_InitStruct.TransferDirection = LL_SPI_FULL_DUPLEX;
   SPI_InitStruct.Mode = LL_SPI_MODE_MASTER;
@@ -59,7 +64,43 @@ void spi_setup(void) {
   LL_SPI_Init(ESC_SPI_Instance, &SPI_InitStruct);
   LL_SPI_SetStandard(ESC_SPI_Instance, LL_SPI_PROTOCOL_MOTOROLA);
 
+  LL_DMA_SetPeriphAddress(DMA2, LL_DMA_STREAM_3,
+                          LL_SPI_DMA_GetRegAddr(ESC_SPI_Instance));
+  // LL_DMA_ClearFlag_TC3(DMA2);
+  // LL_DMA_EnableIT_TC(DMA2, LL_DMA_STREAM_3);
+  LL_SPI_EnableDMAReq_TX(SPI1);
   LL_SPI_Enable(ESC_SPI_Instance);
+}
+
+void spi_dmaisr_init(void) {
+  // 使能DMA时钟
+  __HAL_RCC_DMA2_CLK_ENABLE();
+
+  // NVIC_SetPriority(DMA2_Stream3_IRQn,
+  //                  NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 0));
+  // NVIC_EnableIRQ(DMA2_Stream3_IRQn);
+}
+
+void spi_dma_configuration(void) {
+  /* SPI1_TX Init */
+  LL_DMA_SetChannelSelection(DMA2, LL_DMA_STREAM_3, LL_DMA_CHANNEL_3);
+
+  LL_DMA_SetDataTransferDirection(DMA2, LL_DMA_STREAM_3,
+                                  LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
+
+  LL_DMA_SetStreamPriorityLevel(DMA2, LL_DMA_STREAM_3, LL_DMA_PRIORITY_LOW);
+
+  LL_DMA_SetMode(DMA2, LL_DMA_STREAM_3, LL_DMA_MODE_NORMAL);
+
+  LL_DMA_SetPeriphIncMode(DMA2, LL_DMA_STREAM_3, LL_DMA_PERIPH_NOINCREMENT);
+
+  LL_DMA_SetMemoryIncMode(DMA2, LL_DMA_STREAM_3, LL_DMA_MEMORY_INCREMENT);
+
+  LL_DMA_SetPeriphSize(DMA2, LL_DMA_STREAM_3, LL_DMA_PDATAALIGN_BYTE);
+
+  LL_DMA_SetMemorySize(DMA2, LL_DMA_STREAM_3, LL_DMA_MDATAALIGN_BYTE);
+
+  LL_DMA_DisableFifoMode(DMA2, LL_DMA_STREAM_3);
 }
 
 // 开启片选
@@ -115,7 +156,7 @@ void write(int8_t board, uint8_t *data, uint8_t size) {
   // for (int i = 0; i < size; ++i) {
   //   spi_transfer(data[i]);
   // }
-
+#ifndef USE_DMA_SPI
   __disable_irq();
 
   for (uint32_t i = 0; i < size; i++) {
@@ -140,6 +181,42 @@ void write(int8_t board, uint8_t *data, uint8_t size) {
   }
 
   __enable_irq();
+
+#else
+  // 2. 切半双工 TX-only
+  LL_SPI_Disable(ESC_SPI_Instance);
+  LL_SPI_SetTransferDirection(ESC_SPI_Instance, LL_SPI_HALF_DUPLEX_TX);
+  LL_SPI_Enable(ESC_SPI_Instance);
+
+  // 3. 等待上次 DMA 事务结束
+  while (LL_DMA_IsEnabledStream(DMA2, LL_DMA_STREAM_3));
+
+  // 4. 配置地址 & 长度
+  LL_DMA_ClearFlag_TC3(DMA2);
+  LL_DMA_SetMemoryAddress(DMA2, LL_DMA_STREAM_3, (uint32_t)data);
+  LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_3, size);
+
+  // 5. 启动 TX-DMA
+  LL_SPI_EnableDMAReq_TX(ESC_SPI_Instance);
+  LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_3);
+
+  // 6. 等待 DMA 完成
+  // 8. 等待 TCIF3 置位（本次传输完成）
+  while (!LL_DMA_IsActiveFlag_TC3(DMA2)) {
+    __NOP();
+  }
+  // 9. 清标志
+  LL_DMA_ClearFlag_TC3(DMA2);
+
+  // 7. 关闭 DMA 请求
+  LL_SPI_DisableDMAReq_TX(ESC_SPI_Instance);
+  // LL_DMA_ClearFlag_TC3(DMA2);
+
+  // 8. 恢复全双工
+  LL_SPI_Disable(ESC_SPI_Instance);
+  LL_SPI_SetTransferDirection(ESC_SPI_Instance, LL_SPI_FULL_DUPLEX);
+  LL_SPI_Enable(ESC_SPI_Instance);
+#endif
 }
 
 /**
