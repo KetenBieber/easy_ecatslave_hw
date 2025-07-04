@@ -116,9 +116,10 @@ void write(int8_t board, uint8_t *data, uint8_t size) {
   //   spi_transfer(data[i]);
   // }
 
-  uint32_t timeout = 10000U;
+  __disable_irq();
 
   for (uint32_t i = 0; i < size; i++) {
+    uint32_t timeout = 10000U;
     // 写入一个字节，开始发送
     LL_SPI_TransmitData8(ESC_SPI_Instance, data[i]);
     // 等待TXE，保证DR可写
@@ -133,11 +134,12 @@ void write(int8_t board, uint8_t *data, uint8_t size) {
     (void)LL_SPI_ReceiveData8(ESC_SPI_Instance);
   }
 
-  // 全部写完之后，等待总线空闲并清除最后残余的RXNE
-  while (LL_SPI_IsActiveFlag_BSY(ESC_SPI_Instance) ||
-         LL_SPI_IsActiveFlag_RXNE(ESC_SPI_Instance)) {
+  // 最后统一等 BSY/RXNE
+  while ((LL_SPI_IsActiveFlag_BSY(ESC_SPI_Instance))) {
     (void)LL_SPI_ReceiveData8(ESC_SPI_Instance);
   }
+
+  __enable_irq();
 }
 
 /**
@@ -148,11 +150,19 @@ void write(int8_t board, uint8_t *data, uint8_t size) {
  * @param size
  */
 void read(int8_t board, uint8_t *result, uint8_t size) {
-  for (int i = 0; i < size; ++i) {
-    result[i] = spi_transfer(DUMMY_BYTE);
+  __disable_irq();
+  for (uint32_t i = 0; i < size; i++) {
+    // 1) 发一个哑字节，产生时钟
+    LL_SPI_TransmitData8(ESC_SPI_Instance, DUMMY_BYTE);
+    // 2) 等待 RXNE，就绪即可读
+    while (!LL_SPI_IsActiveFlag_RXNE(ESC_SPI_Instance));
+    // 3) 读 DR，既拿到数据又清除 RXNE
+    result[i] = LL_SPI_ReceiveData8(ESC_SPI_Instance);
   }
+  // 4) 全部读完后，再等 BSY 清零
+  while (LL_SPI_IsActiveFlag_BSY(ESC_SPI_Instance));
+  __enable_irq();
 }
-
 /**
  * @brief 全双工传输，在发送数据的同时，将每个传输操作返回的字节存入
  *
