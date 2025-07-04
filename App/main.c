@@ -80,7 +80,7 @@ int main(void) {
     // 指示while是否还健在
     // if (ESC_ALeventmaskread() == 0xFFFFFFFF) {
     // if (ESC_ALeventmaskread() == 0x0) {
-    if (dd++ > 500) {
+    if (dd++ > 1000) {
       // HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
       PCToggle(13);
       dd = 0;

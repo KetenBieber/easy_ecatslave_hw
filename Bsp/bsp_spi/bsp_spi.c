@@ -56,10 +56,10 @@ void spi_setup(void) {
   SPI_InitStruct.BitOrder = LL_SPI_MSB_FIRST;
   SPI_InitStruct.CRCCalculation = LL_SPI_CRCCALCULATION_DISABLE;
   SPI_InitStruct.CRCPoly = 10;
-  LL_SPI_Init(SPI1, &SPI_InitStruct);
-  LL_SPI_SetStandard(SPI1, LL_SPI_PROTOCOL_MOTOROLA);
+  LL_SPI_Init(ESC_SPI_Instance, &SPI_InitStruct);
+  LL_SPI_SetStandard(ESC_SPI_Instance, LL_SPI_PROTOCOL_MOTOROLA);
 
-  LL_SPI_Enable(SPI1);
+  LL_SPI_Enable(ESC_SPI_Instance);
 }
 
 // 开启片选
@@ -85,37 +85,82 @@ inline static uint8_t spi_transfer(uint8_t byte) {
   uint32_t timeout = 10000U;  // 设置超时时间
 
   // 等待发送缓存空，有超时保护
-  while (!LL_SPI_IsActiveFlag_TXE(SPI1)) {
+  while (!LL_SPI_IsActiveFlag_TXE(ESC_SPI_Instance)) {
     if (--timeout == 0) {
       // 超时处理，可以返回一个错误码或结束函数
       return 0xFF;  // 返回错误码（根据具体需求修改）
     }
   }
-  LL_SPI_TransmitData8(SPI1, byte);
+  LL_SPI_TransmitData8(ESC_SPI_Instance, byte);
 
   timeout = 10000U;
   // 等待接收缓存非空，有超时保护
-  while (!LL_SPI_IsActiveFlag_RXNE(SPI1)) {
+  while (!LL_SPI_IsActiveFlag_RXNE(ESC_SPI_Instance)) {
     if (--timeout == 0) {
       return 0xFF;  // 返回错误码
     }
   }
 
-  return LL_SPI_ReceiveData8(SPI1);
+  return LL_SPI_ReceiveData8(ESC_SPI_Instance);
 }
 
+/**
+ * @brief 仅写入
+ *
+ * @param board
+ * @param data
+ * @param size
+ */
 void write(int8_t board, uint8_t *data, uint8_t size) {
-  for (int i = 0; i < size; ++i) {
-    spi_transfer(data[i]);
+  // for (int i = 0; i < size; ++i) {
+  //   spi_transfer(data[i]);
+  // }
+
+  uint32_t timeout = 10000U;
+
+  for (uint32_t i = 0; i < size; i++) {
+    // 写入一个字节，开始发送
+    LL_SPI_TransmitData8(ESC_SPI_Instance, data[i]);
+    // 等待TXE，保证DR可写
+    while (!LL_SPI_IsActiveFlag_TXE(ESC_SPI_Instance)) {
+      if (--timeout == 0) {
+        // 超时处理
+        return;
+      }
+    }
+
+    // 如果有上次残留的 RXNE，立刻读出清标志
+    (void)LL_SPI_ReceiveData8(ESC_SPI_Instance);
+  }
+
+  // 全部写完之后，等待总线空闲并清除最后残余的RXNE
+  while (LL_SPI_IsActiveFlag_BSY(ESC_SPI_Instance) ||
+         LL_SPI_IsActiveFlag_RXNE(ESC_SPI_Instance)) {
+    (void)LL_SPI_ReceiveData8(ESC_SPI_Instance);
   }
 }
 
+/**
+ * @brief 仅读取
+ *
+ * @param board
+ * @param result
+ * @param size
+ */
 void read(int8_t board, uint8_t *result, uint8_t size) {
   for (int i = 0; i < size; ++i) {
     result[i] = spi_transfer(DUMMY_BYTE);
   }
 }
 
+/**
+ * @brief 全双工传输，在发送数据的同时，将每个传输操作返回的字节存入
+ *
+ * @param board
+ * @param result
+ * @param data
+ * @param size
+ */
 void spi_bidirectionally_transfer(int8_t board, uint8_t *result, uint8_t *data,
                                   uint8_t size) {
   for (int i = 0; i < size; ++i) {
