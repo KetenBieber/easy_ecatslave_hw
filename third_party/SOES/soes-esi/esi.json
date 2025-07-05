@@ -1,0 +1,240 @@
+{
+  "form": {
+    "VendorName": "sync_ecat_test",
+    "VendorID": "0x000",
+    "ProductCode": "0x00ab123",
+    "ProfileNo": "5001",
+    "RevisionNumber": "0x002",
+    "SerialNumber": "0x001",
+    "HWversion": "0.0.1",
+    "SWversion": "0.0.1",
+    "EEPROMsize": "2048",
+    "RxMailboxOffset": "0x1000",
+    "TxMailboxOffset": "0x1200",
+    "MailboxSize": "512",
+    "SM2Offset": "0x1600",
+    "SM3Offset": "0x1A00",
+    "TextGroupType": "sync_ecat_test",
+    "TextGroupName5": "sync_ecat_test",
+    "ImageName": "IMGCBY",
+    "TextDeviceType": "DigIn2000",
+    "TextDeviceName": "sync_ecat_test",
+    "Port0Physical": "Y",
+    "Port1Physical": "Y",
+    "Port2Physical": " ",
+    "Port3Physical": " ",
+    "ESC": "LAN9252",
+    "SPImode": "0",
+    "CoeDetailsEnableSDO": true,
+    "CoeDetailsEnableSDOInfo": true,
+    "CoeDetailsEnablePDOAssign": true,
+    "CoeDetailsEnablePDOConfiguration": true,
+    "CoeDetailsEnableUploadAtStartup": true,
+    "CoeDetailsEnableSDOCompleteAccess": true,
+    "DetailsEnableUseFoE": false
+  },
+  "od": {
+    "sdo": {
+      "2000": {
+        "otype": "ARRAY",
+        "name": "max_motor_velocities",
+        "access": "RO",
+        "dtype": "UNSIGNED16",
+        "items": [
+          {
+            "name": "Max SubIndex"
+          },
+          {
+            "name": "id1",
+            "value": "0",
+            "data": "&Obj.max_motor_velocities[0]"
+          },
+          {
+            "name": "id2",
+            "value": "0",
+            "data": "&Obj.max_motor_velocities[1]"
+          }
+        ],
+        "isSDOitem": true
+      }
+    },
+    "txpdo": {
+      "6001": {
+        "otype": "ARRAY",
+        "name": "can0_motor_positions",
+        "access": "RO",
+        "dtype": "INTEGER16",
+        "items": [
+          {
+            "name": "Max SubIndex"
+          },
+          {
+            "name": "id1",
+            "value": "0",
+            "data": "&Obj.can0_motor_positions[0]"
+          },
+          {
+            "name": "id2",
+            "value": "0",
+            "data": "&Obj.can0_motor_positions[1]"
+          }
+        ],
+        "pdo_mappings": [
+          "txpdo"
+        ]
+      },
+      "6002": {
+        "otype": "ARRAY",
+        "name": "can0_motor_velocities",
+        "access": "RO",
+        "dtype": "INTEGER16",
+        "items": [
+          {
+            "name": "Max SubIndex"
+          },
+          {
+            "name": "id1",
+            "value": "0",
+            "data": "&Obj.can0_motor_velocities[0]"
+          },
+          {
+            "name": "id2",
+            "value": "0",
+            "data": "&Obj.can0_motor_velocities[1]"
+          }
+        ],
+        "pdo_mappings": [
+          "txpdo"
+        ]
+      },
+      "6003": {
+        "otype": "ARRAY",
+        "name": "can0_motor_currents",
+        "access": "RO",
+        "dtype": "INTEGER16",
+        "items": [
+          {
+            "name": "Max SubIndex"
+          },
+          {
+            "name": "id1",
+            "value": "0",
+            "data": "&Obj.can0_motor_currents[0]"
+          },
+          {
+            "name": "id2",
+            "value": "0",
+            "data": "&Obj.can0_motor_currents[1]"
+          }
+        ],
+        "pdo_mappings": [
+          "txpdo"
+        ]
+      },
+      "6004": {
+        "otype": "ARRAY",
+        "name": "can0_motor_temperatures",
+        "access": "RO",
+        "dtype": "UNSIGNED8",
+        "items": [
+          {
+            "name": "Max SubIndex"
+          },
+          {
+            "name": "id1",
+            "value": "0",
+            "data": "&Obj.can0_motor_temperatures[0]"
+          },
+          {
+            "name": "id2",
+            "value": "0",
+            "data": "&Obj.can0_motor_temperatures[1]"
+          }
+        ],
+        "pdo_mappings": [
+          "txpdo"
+        ]
+      }
+    },
+    "rxpdo": {
+      "7000": {
+        "otype": "RECORD",
+        "name": "led_ctrl",
+        "access": "RO",
+        "items": [
+          {
+            "name": "Max SubIndex"
+          },
+          {
+            "name": "led1",
+            "dtype": "BOOLEAN",
+            "value": "0",
+            "data": "&Obj.led_ctrl.led1",
+            "access": "RO"
+          },
+          {
+            "name": "led2",
+            "dtype": "BOOLEAN",
+            "value": "0",
+            "access": "RO",
+            "data": "&Obj.led_ctrl.led2"
+          },
+          {
+            "name": "led3",
+            "dtype": "BOOLEAN",
+            "value": "0",
+            "access": "RO",
+            "data": "&Obj.led_ctrl.led3"
+          }
+        ],
+        "pdo_mappings": [
+          "rxpdo"
+        ]
+      },
+      "7001": {
+        "otype": "ARRAY",
+        "name": "can0_motor_commands",
+        "access": "RO",
+        "dtype": "INTEGER16",
+        "items": [
+          {
+            "name": "Max SubIndex"
+          },
+          {
+            "name": "id1",
+            "value": "0",
+            "data": "&Obj.can0_motor_commands[0]"
+          },
+          {
+            "name": "id2",
+            "value": "0",
+            "data": "&Obj.can0_motor_commands[1]"
+          }
+        ],
+        "pdo_mappings": [
+          "rxpdo"
+        ]
+      }
+    }
+  },
+  "dc": [
+    {
+      "Name": "SM-Synchron",
+      "Description": "SM-Synchron",
+      "AssignActivate": "#x000",
+      "Sync0cycleTime": "0",
+      "Sync0shiftTime": "0",
+      "Sync1cycleTime": "0",
+      "Sync1shiftTime": "0"
+    },
+    {
+      "Name": "DC",
+      "Description": "DC-Synchron",
+      "AssignActivate": "#x300",
+      "Sync0cycleTime": "0",
+      "Sync0shiftTime": "0",
+      "Sync1cycleTime": "0",
+      "Sync1shiftTime": "0"
+    }
+  ]
+}
