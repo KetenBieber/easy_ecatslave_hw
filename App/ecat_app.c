@@ -28,7 +28,7 @@
 _Objects Obj;
 uint8_t txpdo[MAX_TXPDO_SIZE] __attribute__((aligned(8)));  // 强制8字节对齐
 uint8_t can_txData[8] = {0};
-uint32_t no_master_msgs_cnt = 0;
+uint16_t max_motor_velocities[2] = {0};  // 最大电机速度
 
 /* sem to run the apploop */
 static uint8_t pdi_isr_flag_ = 0;
@@ -48,6 +48,20 @@ static uint32_t no_pdi_msgs_ = 0;
 static uint32_t no_sync0_msgs_ = 0;
 
 #define CAN_TIMEOUT_MS 1000  // 超时1000ms
+
+void toggle_flash(uint32_t *counter, uint8_t led_pin, uint32_t start,
+                  uint32_t interval, uint8_t count) {
+  (*counter)++;
+  uint32_t end = start + interval * (count - 1);
+  if (*counter >= start && *counter <= end) {
+    if (((*counter - start) % interval) == 0) {
+      PCToggle(led_pin);
+    }
+  }
+  if (*counter > end) {
+    *counter = 0;
+  }
+}
 
 uint16_t _dc_checker(void) {
   int dog_ = 0;
@@ -150,13 +164,27 @@ void _txpdo_override(void) {
  */
 void _post_sdo_callback(uint16_t index, uint8_t subindex, uint16_t flags) {
   // HAL_GPIO_WritePin(LED5_GPIO_Port, LED5_Pin, GPIO_PIN_SET);
+  max_motor_velocities[0] = Obj.max_motor_velocities[0];
+  max_motor_velocities[1] = Obj.max_motor_velocities[1];
 }
 
 /**
  * @brief 当esc从站状态变为safe-operational时选用的output函数
  *
  */
-void _safeoutput_callback(void) {}
+void _safeoutput_callback(void) {
+  // 在这里做安全处理
+  CAN0_TxHeader.StdId = 0x200;
+  can_txData[0] = (0 >> 8u);
+  can_txData[1] = 0;
+  can_txData[2] = (0 >> 8u);
+  can_txData[3] = 0;
+
+  if (EnqueueCanMessage(&can0Queue, &CAN0_TxHeader, can_txData) != 0) {
+    // 队列满时增加错误计数
+    can0_tx_err_cnt++;
+  }
+}
 
 /* core cfg */
 static esc_cfg_t config = {
@@ -197,7 +225,6 @@ void Ecatapp_Init(void) {
 /**
  * @brief can1 接收回调，处理大疆电机数据
  *
- *        2025.6.19 写点大粪，将浮点位置拆分后放在position 和 currents
  *
  *
  * @param hcan
@@ -234,6 +261,12 @@ static uint32_t debug_sync0 = 0;
 #ifdef DEBUG
 float func_1_runtime = 0, func_2_runtime = 0;
 float loop_start = 0;
+
+uint64_t start_copy_output_data = 0;
+uint64_t copy_ouput_data_runtime = 0;
+
+float sm2_cycle_time = 0.0f, sm2_start_time = 0.0f,
+      sm2_last_time = 0.0f;  // 用于记录SM2的周期时间
 #endif
 // MainLoop 部分
 void Ecatapp_Loop(void) {
@@ -246,35 +279,35 @@ void Ecatapp_Loop(void) {
     ESC_updateALevent();
     DIG_process(DIG_PROCESS_APP_HOOK_FLAG | DIG_PROCESS_INPUTS_FLAG);
     sync0_isr_flag_ = 0;
-    if (debug_sync0++ > 200) {
-      // HAL_GPIO_TogglePin(LED4_GPIO_Port, LED4_Pin);
-      PCToggle(14);
-      debug_sync0 = 0;
-    }
+    // 闪烁指示
+    toggle_flash(&debug_sync0, 13, 1000, 100, 4);
+    // 只有Pdi中断触发，会处理DIG_PROCESS_OUTPUTS_FLAG
   }
-  // 只有Pdi中断触发，会处理DIG_PROCESS_OUTPUTS_FLAG
   if (pdi_isr_flag_) {
     ESC_updateALevent();
     if (ESCvar.ALevent & ESCREG_ALEVENT_SM2) {
+#ifdef DEBUG
+      sm2_start_time = DWT_GetTimeline_ms();
+      sm2_cycle_time = sm2_start_time - sm2_last_time;  //计算SM2中断周期时间
+      sm2_last_time = sm2_start_time;  //更新SM2中断结束时间
+#endif
       if (ESCvar.dcsync == 0) {
         // If DC sync is not active, run the application, all except for
         // the Watchdog 如果DC同步未激活，运行应用程序，但监视器除外
+        start_copy_output_data = DWT_GetTimeline_us();
         DIG_process(DIG_PROCESS_OUTPUTS_FLAG | DIG_PROCESS_APP_HOOK_FLAG |
                     DIG_PROCESS_INPUTS_FLAG);
+        copy_ouput_data_runtime = DWT_GetTimeline_us() - start_copy_output_data;
       } else {
         DIG_process(DIG_PROCESS_OUTPUTS_FLAG);  // If DC sync is active, call
-      }  // output handler only
-      if (debug_pdi++ > 200) {
-        // HAL_GPIO_TogglePin(LED5_GPIO_Port, LED5_Pin);
-        PCToggle(15);
-        debug_pdi = 0;
-      }
+      }                                         // output handler only
+      // 闪烁指示
+      toggle_flash(&debug_pdi, 14, 1000, 100, 4);
     }
     pdi_isr_flag_ = 0;
   } else {
-    // ecat_slv_poll();
-    ecat_slv();
-    DIG_process(DIG_PROCESS_WD_FLAG);
+    ecat_slv_poll();
+    DIG_process(DIG_PROCESS_WD_FLAG | DIG_PROCESS_OUTPUTS_FLAG);
   }
 #endif
 
@@ -338,7 +371,15 @@ void pCAN1_RxCpltCallback(CAN_HandleTypeDef *hcan,
 }
 #endif
 
+#ifdef DEBUG
 int64_t debug_ = 0;
+float sync0_cycle_time = 0.0f, sync0_start_time = 0.0f,
+      sync0_last_time = 0.0f;  // 用于记录sync0的周期时间
+float sync1_cycle_time = 0.0f, sync1_start_time = 0.0f,
+      sync1_last_time = 0.0f;  // 用于记录sync1的周期时间
+float pdi_cycle_time = 0.0f, pdi_start_time = 0.0f,
+      pdi_last_time = 0.0f;  // 用于记录pdi的周期时间
+#endif
 /**
  * @brief 外部中断回调
  *
@@ -348,16 +389,28 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 #if defined(MixedMode) && defined(DOIT_INLOOP)
   /* 检测是否有PDI中断 */
   if (GPIO_Pin == PDI_IRQ_Pin) {
-    // ESC_updateALevent();
-    // if (ESCvar.ALevent & ESCREG_ALEVENT_SM2) {
     pdi_isr_flag_ = 1;
-    no_pdi_msgs_ = 0;  // 重置看门狗计数器
-    // }
+#ifdef DEBUG
+    pdi_start_time = DWT_GetTimeline_ms();
+    pdi_cycle_time = pdi_start_time - pdi_last_time;  // 计算PDI中断周期时间
+    pdi_last_time = pdi_start_time;  // 更新PDI中断结束时间
+#endif
   } else if (GPIO_Pin == SYNC0_IRQ_Pin) {
     sync0_isr_flag_ = 1;
-    no_sync0_msgs_ = 0;
+#ifdef DEBUG
+    sync0_start_time = DWT_GetTimeline_ms();
+    sync0_cycle_time =
+        sync0_start_time - sync0_last_time;  // 计算SYNC0中断周期时间
+    sync0_last_time = sync0_start_time;      // 更新SYNC0中断结束时间
+#endif
   } else if (GPIO_Pin == SYNC1_IRQ_Pin) {
     sync1_isr_flag_ = 1;
+#ifdef DEBUG
+    sync1_start_time = DWT_GetTimeline_ms();
+    sync1_cycle_time =
+        sync1_start_time - sync1_last_time;  // 计算SYNC1中断周期时间
+    sync1_last_time = sync1_start_time;      // 更新SYNC1中断结束时间
+#endif
   }
 #endif
 
@@ -378,7 +431,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
                     DIG_PROCESS_INPUTS_FLAG);
       } else {
         DIG_process(DIG_PROCESS_OUTPUTS_FLAG);  // If DC sync is active, call
-      }  // output handler only
+      }                                         // output handler only
     }
     debug_pdi++;
   }
@@ -469,19 +522,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 void LL_Local_TimerISR(void) {
   // 本地时钟看门狗
 #ifdef MixedMode
-  // DIG_process(DIG_PROCESS_WD_FLAG);
-  if ((ESCvar.ALstatus & (ESCsafeop | ESCerror)) == (ESCsafeop | ESCerror)) {
-    // 直接硬件复位
-    HAL_NVIC_SystemReset();
-  }
+  DIG_process(DIG_PROCESS_WD_FLAG);
+  // if ((ESCvar.ALstatus & (ESCsafeop | ESCerror)) == (ESCsafeop | ESCerror)) {
+  //   // 直接硬件复位
+  //   HAL_NVIC_SystemReset();
+  // }
 
   /* watch dog waiting */
-  // no_pdi_msgs_++;
-  no_sync0_msgs_++;
-  if (no_sync0_msgs_ > 10000) {
-    // 硬件复位，重头再来
-    HAL_NVIC_SystemReset();
-  }
 #endif
 
   LL_TIM_ClearFlag_UPDATE(LOCAL_TIM);

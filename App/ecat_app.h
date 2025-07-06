@@ -31,7 +31,6 @@ extern "C" {
 #include "ecat_slv.h"
 #include "utypes.h"
 
-
 /*----------------------------------macro----------------------------------*/
 // Only SM2 should be masked to generate PDI interrupt
 #define MIXEDMODE_PDI_INT_MASK ESCREG_ALEVENT_SM2
@@ -53,6 +52,9 @@ extern CAN_TxHeaderTypeDef CAN0_TxHeader;
 extern CAN_TxHeaderTypeDef CAN1_TxHeader;
 
 /*----------------------------------function----------------------------------*/
+
+void toggle_flash(uint32_t *counter, uint8_t led_pin, uint32_t start,
+                  uint32_t interval, uint8_t count);
 void esc_pdi_debug();
 
 void Ecatapp_Init(void);

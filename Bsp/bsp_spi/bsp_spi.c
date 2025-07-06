@@ -19,7 +19,10 @@
 #include "bsp_spi.h"
 
 void spi_setup(void) {
+#ifdef USE_DMA_SPI
   spi_dmaisr_init();
+#endif
+
   /* SPI Instance relative */
   LL_SPI_InitTypeDef SPI_InitStruct = {0};
   LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -49,7 +52,9 @@ void spi_setup(void) {
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
   LL_GPIO_Init(FLASH_SPI_CS_GPIO_Port, &GPIO_InitStruct);
 
+#ifdef USE_DMA_SPI
   spi_dma_configuration();
+#endif
   /* for spi  */
   SPI_InitStruct.TransferDirection = LL_SPI_FULL_DUPLEX;
   SPI_InitStruct.Mode = LL_SPI_MODE_MASTER;
@@ -63,11 +68,12 @@ void spi_setup(void) {
   SPI_InitStruct.CRCPoly = 10;
   LL_SPI_Init(ESC_SPI_Instance, &SPI_InitStruct);
   LL_SPI_SetStandard(ESC_SPI_Instance, LL_SPI_PROTOCOL_MOTOROLA);
-
+#ifdef USE_DMA_SPI
   LL_DMA_SetPeriphAddress(DMA2, LL_DMA_STREAM_3,
                           LL_SPI_DMA_GetRegAddr(ESC_SPI_Instance));
   // LL_DMA_ClearFlag_TC3(DMA2);
   // LL_DMA_EnableIT_TC(DMA2, LL_DMA_STREAM_3);
+#endif
   LL_SPI_EnableDMAReq_TX(SPI1);
   LL_SPI_Enable(ESC_SPI_Instance);
 }
@@ -189,7 +195,8 @@ void write(int8_t board, uint8_t *data, uint8_t size) {
   LL_SPI_Enable(ESC_SPI_Instance);
 
   // 3. 等待上次 DMA 事务结束
-  while (LL_DMA_IsEnabledStream(DMA2, LL_DMA_STREAM_3));
+  while (LL_DMA_IsEnabledStream(DMA2, LL_DMA_STREAM_3))
+    ;
 
   // 4. 配置地址 & 长度
   LL_DMA_ClearFlag_TC3(DMA2);
@@ -232,12 +239,14 @@ void read(int8_t board, uint8_t *result, uint8_t size) {
     // 1) 发一个哑字节，产生时钟
     LL_SPI_TransmitData8(ESC_SPI_Instance, DUMMY_BYTE);
     // 2) 等待 RXNE，就绪即可读
-    while (!LL_SPI_IsActiveFlag_RXNE(ESC_SPI_Instance));
+    while (!LL_SPI_IsActiveFlag_RXNE(ESC_SPI_Instance))
+      ;
     // 3) 读 DR，既拿到数据又清除 RXNE
     result[i] = LL_SPI_ReceiveData8(ESC_SPI_Instance);
   }
   // 4) 全部读完后，再等 BSY 清零
-  while (LL_SPI_IsActiveFlag_BSY(ESC_SPI_Instance));
+  while (LL_SPI_IsActiveFlag_BSY(ESC_SPI_Instance))
+    ;
   __enable_irq();
 }
 /**

@@ -511,16 +511,21 @@ uint32_t ESC_enable_DC(void) {
   return setsync0cycleTime;
 }
 
+uint32_t sync0cycleTime = 0;
 int ESC_dc_watchdog_init(void) {
+#define MIN_WATCHDOG_VALUE_NS 1000000  // 最小看门狗值为1毫秒（1000000纳秒）
   /* Indicate we run DC 全局变量标志位，说明系统启用了DC同步 */
   ESCvar.dcsync = 1;
   /* Fetch the sync counter limit (SDO10F1)
    * 为同步计数器设置一个上限值（通常来自SDO10F1），用于后续的看门狗计数判断 */
-  ESCvar.synccounterlimit = 10000;
+  ESCvar.synccounterlimit = 200;
 
-  uint32_t sync0cycleTime =
+  sync0cycleTime =
       ESC_enable_DC();  // 该函数内部会检测EtherCAT从站是否使能了DC同步功能，并读取SYNC0的周期时间
   int watchdog_value =
       2 * sync0cycleTime;  // 计算看门狗超时时间：将同步周期时间乘以2
+  if (watchdog_value < MIN_WATCHDOG_VALUE_NS)
+    watchdog_value =
+        MIN_WATCHDOG_VALUE_NS;  // 如果计算结果小于最小值，则使用最小值
   return watchdog_value;
 }

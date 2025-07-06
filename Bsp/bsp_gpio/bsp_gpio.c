@@ -80,7 +80,7 @@ void SYNC0_Configuration(void) {
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(SYNC0_IRQ_GPIO_Port, &GPIO_InitStruct);
 
-  HAL_NVIC_SetPriority(SYNC0_IRQ_EXTI_IRQn, 1, 1);
+  HAL_NVIC_SetPriority(SYNC0_IRQ_EXTI_IRQn, 0, 0);
   // HAL_NVIC_EnableIRQ(SYNC0_IRQ_EXTI_IRQn);  // 不允许在此处使能
 }
 
@@ -95,7 +95,7 @@ void SYNC1_Configuration(void) {
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(SYNC1_IRQ_GPIO_Port, &GPIO_InitStruct);
 
-  HAL_NVIC_SetPriority(SYNC1_IRQ_EXTI_IRQn, 1, 1);
+  HAL_NVIC_SetPriority(SYNC1_IRQ_EXTI_IRQn, 0, 0);
   // HAL_NVIC_EnableIRQ(SYNC1_IRQ_EXTI_IRQn);  // 不允许在此处使能
 }
 

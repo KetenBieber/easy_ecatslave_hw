@@ -96,9 +96,8 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
 
     # Add user defined symbols
     # use these symbols to choose which mode:FreeRun/Mixed Mode/Interrupt Mode
-    FreeRun
-
-    # MixedMode
+    # FreeRun
+    MixedMode
 
     # InterruptMode
 
@@ -112,7 +111,7 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     USE_LL_DRIVER
 
     # 使用DMA的SPI
-    USE_DMA_SPI
+    # USE_DMA_SPI
 )
 
 # Add linked libraries
