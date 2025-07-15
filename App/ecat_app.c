@@ -18,6 +18,9 @@
  *          PA3 --- 1号舵轮io
  *          PD2 --- 2号舵轮io
  *          PC11 --- 3号舵轮io
+ *
+ *
+ *
  * @versioninfo :
  */
 #include "ecat_app.h"
@@ -28,7 +31,6 @@
 _Objects Obj;
 uint8_t txpdo[MAX_TXPDO_SIZE] __attribute__((aligned(8)));  // 强制8字节对齐
 uint8_t can_txData[8] = {0};
-uint32_t no_master_msgs_cnt = 0;
 
 /* sem to run the apploop */
 static uint8_t pdi_isr_flag_ = 0;
@@ -37,6 +39,19 @@ static uint8_t sync1_isr_flag_ = 0;
 uint32_t can0_tx_err_cnt = 0;
 uint32_t can1_tx_err_cnt = 0;
 
+// can0和can1的错误计数,可用于重启
+uint32_t can0_queue_err_cnt = 0;  // can0队列错误计数
+uint32_t can1_queue_err_cnt = 0;  // can1队列错误计数
+uint32_t can0_queue_cnt = 0;
+uint32_t can1_queue_cnt = 0;  // can0和can1队列计数
+
+#ifdef TEST_TIME
+float can0_queue_arbitration_lost = 0.0f;    // can0队列仲裁时间
+float can1_queue_arbitration_lost = 0.0f;    // can0队列仲裁时间
+float can_all_send_arbitration_lost = 0.0f;  // 所有can发送仲裁时间
+int32_t real_tx_success = 0;
+int32_t add_to_mailbox_success = 0;
+#endif
 extern CAN_QueueInstance can0Queue;
 extern CAN_QueueInstance can1Queue;
 
@@ -48,6 +63,20 @@ static uint32_t no_pdi_msgs_ = 0;
 static uint32_t no_sync0_msgs_ = 0;
 
 #define CAN_TIMEOUT_MS 1000  // 超时1000ms
+
+void toggle_flash(uint32_t *counter, uint8_t led_pin, uint32_t start,
+                  uint32_t interval, uint8_t count) {
+  (*counter)++;
+  uint32_t end = start + interval * (count - 1);
+  if (*counter >= start && *counter <= end) {
+    if (((*counter - start) % interval) == 0) {
+      PCToggle(led_pin);
+    }
+  }
+  if (*counter > end) {
+    *counter = 0;
+  }
+}
 
 uint16_t _dc_checker(void) {
   int dog_ = 0;
@@ -79,15 +108,15 @@ void cb_get_inputs(void) {
   /* 一共8个可设置input io */
 
   /* 获取光电门io状态，进行打包 */
-  Obj.input_io.io1 = PAin(3);
-  Obj.input_io.io2 = PDin(2);
-  Obj.input_io.io3 = PCin(11);
+  Obj.input_io.io1 = PGin(0);
+  Obj.input_io.io2 = PGin(1);
+  Obj.input_io.io3 = PGin(2);
   // Obj.input_io.io2 = PDin(7);
   // Obj.input_io.io3 = PGin(10);
   /* can总线上电机，将直接由can的接收中断进行打包 */
 }
 
-#ifdef DEBUG
+#ifdef TEST_TIME
 float current_time = 0.0f, last_time = 0.0f;  // 用于记录当前时间，单位为秒
 float dt;
 float setOutput_run_time = 0.0f;
@@ -97,9 +126,11 @@ float setOutput_run_time = 0.0f;
  *
  */
 void cb_set_outputs(void) {
+#ifdef TEST_TIME
   current_time = DWT_GetTimeline_ms();
   dt = current_time - last_time;
   last_time = current_time;
+#endif
   /* 有8个可控io */
   //
   CAN0_TxHeader.StdId = 0x200;
@@ -130,10 +161,11 @@ void cb_set_outputs(void) {
   } else {
   }
 #else
-  if (EnqueueCanMessage(&can0Queue, &CAN0_TxHeader, can_txData) != 0) {
+  if (EnqueueCanMessage(&can0Queue, &CAN0_TxHeader, can_txData) == -1) {
     // 队列满时增加错误计数
-    can0_tx_err_cnt++;
+    can0_queue_err_cnt++;
   }
+  can0_queue_cnt++;
 #endif
 
   CAN0_TxHeader.StdId = 0x1FF;
@@ -163,14 +195,34 @@ void cb_set_outputs(void) {
   } else {
   }
 #else
-  if (EnqueueCanMessage(&can0Queue, &CAN0_TxHeader, can_txData) != 0) {
+  if (EnqueueCanMessage(&can0Queue, &CAN0_TxHeader, can_txData) == -1) {
     // 队列满时增加错误计数
-    can0_tx_err_cnt++;
+    can0_queue_err_cnt++;
   }
+  can0_queue_cnt++;
+#endif
+
+#ifdef TEST_TIME
+  // for (int i = 0; i < 5; i++) {
+  //   CAN0_TxHeader.StdId = 0x201 + i;
+  //   can_txData[0] = (Obj.can0_motor_commands[0] >> 8u);
+  //   can_txData[1] = Obj.can0_motor_commands[0];
+  //   can_txData[2] = (Obj.can0_motor_commands[1] >> 8u);
+  //   can_txData[3] = Obj.can0_motor_commands[1];
+  //   can_txData[4] = (Obj.can0_motor_commands[2] >> 8u);
+  //   can_txData[5] = Obj.can0_motor_commands[2];
+  //   can_txData[6] = (Obj.can0_motor_commands[3] >> 8u);
+  //   can_txData[7] = Obj.can0_motor_commands[3];
+  //   if (EnqueueCanMessage(&can0Queue, &CAN0_TxHeader, can_txData) == -1) {
+  //     // 队列满时增加错误计数
+  //     can0_queue_err_cnt++;
+  //   }
+  //   can0_queue_cnt++;
+  // }
 #endif
 
 #ifndef ONLY_CAN0
-  /* 6个电机 */
+  /* 3个电机 */
   for (int i = 1; i <= 3; i++) {
     CAN1_TxHeader.ExtId = (CAN_CMD_SET_ERPM << 8 | i);
     CAN1_TxHeader.IDE = CAN_ID_EXT;
@@ -203,43 +255,70 @@ void cb_set_outputs(void) {
     } else {
     }
 #else
-    if (EnqueueCanMessage(&can1Queue, &CAN1_TxHeader, can_txData) != 0) {
+    if (EnqueueCanMessage(&can1Queue, &CAN1_TxHeader, can_txData) == -1) {
       // 队列满时增加错误计数
-      can1_tx_err_cnt++;
+      can1_queue_err_cnt++;
     }
+    can1_queue_cnt++;
 #endif
   }
+
+#ifdef TEST_TIME
+  // for (int i = 0; i < 3; i++) {
+  //   CAN1_TxHeader.ExtId = (CAN_CMD_SET_CURRENT << 8 | i);
+  //   CAN1_TxHeader.IDE = CAN_ID_EXT;
+  //   // 如果目标转速为0，发送刹车指令
+  //   can_txData[0] = ((int32_t)BRAKE_CURRENT >> 24) & 0xFF;
+  //   can_txData[1] = ((int32_t)BRAKE_CURRENT >> 16) & 0xFF;
+  //   can_txData[2] = ((int32_t)BRAKE_CURRENT >> 8) & 0xFF;
+  //   can_txData[3] = (int32_t)BRAKE_CURRENT & 0xFF;
+  //   if (EnqueueCanMessage(&can1Queue, &CAN1_TxHeader, can_txData) == -1) {
+  //     // 队列满时增加错误计数
+  //     can1_queue_err_cnt++;
+  //   }
+  //   can1_queue_cnt++;
+  // }
 #endif
-  // no_master_msgs_cnt = 0;
-#ifdef DEBUG
+
+#endif
+#ifdef TEST_TIME
   setOutput_run_time = DWT_GetTimeline_ms() - current_time;
+  can0_queue_arbitration_lost = (float)can0_tx_err_cnt / (float)can0_queue_cnt;
+  can1_queue_arbitration_lost = (float)can1_tx_err_cnt / (float)can1_queue_cnt;
+  can_all_send_arbitration_lost =
+      (float)real_tx_success /
+      (float)add_to_mailbox_success;  // 所有can发送仲裁时间
 #endif
 }
 
 void _clear_statusword(void) {}
 
 void setZeroOutputs(void) {
-  // 发送空数据
+  // 往can0发送空数据
   CAN0_TxHeader.StdId = 0x200;
   uint32_t tx_mailbox = 0;
   memset(can_txData, 0, sizeof(can_txData));
-  if (HAL_CAN_AddTxMessage(&CAN0_Handle, &CAN0_TxHeader, can_txData,
-                           &tx_mailbox) != HAL_OK)
+  if (EnqueueCanMessage(&can0Queue, &CAN0_TxHeader, can_txData) == -1)
     ;
-#ifndef ONLY_CAN0
-  if (HAL_CAN_AddTxMessage(&CAN1_Handle, &CAN1_TxHeader, can_txData,
-                           &tx_mailbox) != HAL_OK)
-    ;
-#endif
 
   CAN0_TxHeader.StdId = 0x1FF;
-  if (HAL_CAN_AddTxMessage(&CAN0_Handle, &CAN0_TxHeader, can_txData,
-                           &tx_mailbox) != HAL_OK)
+  if (EnqueueCanMessage(&can0Queue, &CAN0_TxHeader, can_txData) == -1)
     ;
+
 #ifndef ONLY_CAN0
-  if (HAL_CAN_AddTxMessage(&CAN1_Handle, &CAN1_TxHeader, can_txData,
-                           &tx_mailbox) != HAL_OK)
-    ;
+  // 往can1上发送空数据
+  for (int i = 1; i <= 3; i++) {
+    CAN1_TxHeader.ExtId = (CAN_CMD_SET_ERPM << 8 | i);
+    CAN1_TxHeader.IDE = CAN_ID_EXT;
+    // 如果目标转速为0，发送刹车指令
+    can_txData[0] = ((int32_t)BRAKE_CURRENT >> 24) & 0xFF;
+    can_txData[1] = ((int32_t)BRAKE_CURRENT >> 16) & 0xFF;
+    can_txData[2] = ((int32_t)BRAKE_CURRENT >> 8) & 0xFF;
+    can_txData[3] = (int32_t)BRAKE_CURRENT & 0xFF;
+    CAN1_TxHeader.ExtId = (CAN_CMD_SET_BRAKE << 8) | i;
+    if (EnqueueCanMessage(&can1Queue, &CAN1_TxHeader, can_txData) == -1)
+      ;
+  }
 #endif
 }
 
@@ -255,7 +334,6 @@ void _txpdo_override(void) {
   ESC_write(ESC_SM3_sma, txpdo, ESCvar.ESC_SM3_sml);
   _clear_statusword();
 }
-
 /**
  * @brief SDO 写入 回调函数
  *
@@ -271,7 +349,35 @@ void _post_sdo_callback(uint16_t index, uint8_t subindex, uint16_t flags) {
  * @brief 当esc从站状态变为safe-operational时选用的output函数
  *
  */
-void _safeoutput_callback(void) {}
+void _safeoutput_callback(void) {
+  // 往can0发送空数据
+  CAN0_TxHeader.StdId = 0x200;
+  uint32_t tx_mailbox = 0;
+  memset(can_txData, 0, sizeof(can_txData));
+  if (EnqueueCanMessage(&can0Queue, &CAN0_TxHeader, can_txData) == -1)
+    ;
+
+  CAN0_TxHeader.StdId = 0x1FF;
+  if (EnqueueCanMessage(&can0Queue, &CAN0_TxHeader, can_txData) == -1)
+    ;
+
+#ifndef ONLY_CAN0
+  // 往can1上发送空数据
+  for (int i = 1; i <= 3; i++) {
+    CAN1_TxHeader.ExtId = (CAN_CMD_SET_ERPM << 8 | i);
+    CAN1_TxHeader.IDE = CAN_ID_EXT;
+    // 如果目标转速为0，发送刹车指令
+    can_txData[0] = ((int32_t)BRAKE_CURRENT >> 24) & 0xFF;
+    can_txData[1] = ((int32_t)BRAKE_CURRENT >> 16) & 0xFF;
+    can_txData[2] = ((int32_t)BRAKE_CURRENT >> 8) & 0xFF;
+    can_txData[3] = (int32_t)BRAKE_CURRENT & 0xFF;
+    CAN1_TxHeader.ExtId = (CAN_CMD_SET_BRAKE << 8) | i;
+
+    if (EnqueueCanMessage(&can1Queue, &CAN1_TxHeader, can_txData) == -1)
+      ;
+  }
+#endif
+}
 
 /* core cfg */
 static esc_cfg_t config = {
@@ -281,7 +387,7 @@ static esc_cfg_t config = {
 #else
     .use_interrupt = 1,
 #endif
-    .watchdog_cnt = 200,  // if TIM happened to be 1ms, this means 200ms
+    .watchdog_cnt = 2000,  //
     .set_defaults_hook = NULL,
     .pre_state_change_hook = NULL,
     .post_state_change_hook = NULL,
@@ -406,9 +512,15 @@ static uint32_t debug_sync0 = 0;
   使用LED5指示 pdi 是否正常工作
 */
 
-#ifdef DEBUG
+#ifdef TEST_TIME
 float func_1_runtime = 0, func_2_runtime = 0;
 float loop_start = 0;
+
+uint64_t start_copy_output_data = 0;
+uint64_t copy_ouput_data_runtime = 0;
+
+float sm2_cycle_time = 0.0f, sm2_start_time = 0.0f,
+      sm2_last_time = 0.0f;  // 用于记录SM2的周期时间
 #endif
 // MainLoop 部分
 void Ecatapp_Loop(void) {
@@ -421,35 +533,40 @@ void Ecatapp_Loop(void) {
     ESC_updateALevent();
     DIG_process(DIG_PROCESS_APP_HOOK_FLAG | DIG_PROCESS_INPUTS_FLAG);
     sync0_isr_flag_ = 0;
-    if (debug_sync0++ > 200) {
-      // HAL_GPIO_TogglePin(LED4_GPIO_Port, LED4_Pin);
-      PCToggle(14);
-      debug_sync0 = 0;
-    }
+    // 闪烁指示
+    toggle_flash(&debug_sync0, 13, 1000, 100, 4);
+    // 只有Pdi中断触发，会处理DIG_PROCESS_OUTPUTS_FLAG
   }
-  // 只有Pdi中断触发，会处理DIG_PROCESS_OUTPUTS_FLAG
   if (pdi_isr_flag_) {
     ESC_updateALevent();
     if (ESCvar.ALevent & ESCREG_ALEVENT_SM2) {
+#ifdef TEST_TIME
+      sm2_start_time = DWT_GetTimeline_ms();
+      sm2_cycle_time = sm2_start_time - sm2_last_time;  // 计算SM2中断周期时间
+      sm2_last_time = sm2_start_time;                   // 更新SM2中断结束时间
+#endif
       if (ESCvar.dcsync == 0) {
         // If DC sync is not active, run the application, all except for
         // the Watchdog 如果DC同步未激活，运行应用程序，但监视器除外
+#ifdef TEST_TIME
+        start_copy_output_data = DWT_GetTimeline_us();
+#endif
         DIG_process(DIG_PROCESS_OUTPUTS_FLAG | DIG_PROCESS_APP_HOOK_FLAG |
-                    DIG_PROCESS_INPUTS_FLAG);
+                    DIG_PROCESS_INPUTS_FLAG | DIG_PROCESS_WD_FLAG);
+#ifdef TEST_TIME
+        copy_ouput_data_runtime = DWT_GetTimeline_us() - start_copy_output_data;
+#endif
       } else {
-        DIG_process(DIG_PROCESS_OUTPUTS_FLAG);  // If DC sync is active, call
+        DIG_process(DIG_PROCESS_OUTPUTS_FLAG |
+                    DIG_PROCESS_WD_FLAG);  // If DC sync is active, call
       }  // output handler only
-      if (debug_pdi++ > 200) {
-        // HAL_GPIO_TogglePin(LED5_GPIO_Port, LED5_Pin);
-        PCToggle(15);
-        debug_pdi = 0;
-      }
+      // 闪烁指示
+      toggle_flash(&debug_pdi, 14, 1000, 100, 4);
     }
     pdi_isr_flag_ = 0;
   } else {
-    // ecat_slv_poll();
-    ecat_slv();
-    DIG_process(DIG_PROCESS_WD_FLAG);
+    ecat_slv_poll();
+    DIG_process(DIG_PROCESS_WD_FLAG | DIG_PROCESS_OUTPUTS_FLAG);
   }
 #endif
 
@@ -477,13 +594,13 @@ void Ecatapp_Loop(void) {
 
 #ifdef FreeRun
 
-#ifdef DEBUG
+#ifdef TEST_TIME
   loop_start = DWT_GetTimeline_ms();
 #endif
 
   ecat_slv_poll();
 
-#ifdef DEBUG
+#ifdef TEST_TIME
   func_1_runtime =
       DWT_GetTimeline_ms() - loop_start;  // 计算ecat_slv_poll运行时间
   loop_start = DWT_GetTimeline_ms();
@@ -492,28 +609,36 @@ void Ecatapp_Loop(void) {
   // 可以看到下面处理了输入输出以及看门狗，这就是所说的不依赖外部中断的方式（FreeRun模式）
   DIG_process(DIG_PROCESS_WD_FLAG | DIG_PROCESS_OUTPUTS_FLAG |
               DIG_PROCESS_INPUTS_FLAG);
-#ifdef DEBUG
+#ifdef TEST_TIME
   func_2_runtime =
       DWT_GetTimeline_ms() - loop_start;  // 计算DIG_process运行时间
 #endif
 #endif
 }
 
-void pCAN0_RxCpltCallback(CAN_HandleTypeDef *hcan,
-                          CAN_RxHeaderTypeDef *temp_rxheader,
-                          const uint8_t *data) {
+void CAN0_RxCpltCallback(CAN_HandleTypeDef *hcan,
+                         CAN_RxHeaderTypeDef *temp_rxheader,
+                         const uint8_t *data) {
   _can0_receive_callback(hcan, temp_rxheader, data);
 }
 
 #ifndef ONLY_CAN0
-void pCAN1_RxCpltCallback(CAN_HandleTypeDef *hcan,
-                          CAN_RxHeaderTypeDef *temp_rxheader,
-                          const uint8_t *data) {
+void CAN1_RxCpltCallback(CAN_HandleTypeDef *hcan,
+                         CAN_RxHeaderTypeDef *temp_rxheader,
+                         const uint8_t *data) {
   _can1_receive_callback(hcan, temp_rxheader, data);
 }
 #endif
 
+#ifdef TEST_TIME
 int64_t debug_ = 0;
+float sync0_cycle_time = 0.0f, sync0_start_time = 0.0f,
+      sync0_last_time = 0.0f;  // 用于记录sync0的周期时间
+float sync1_cycle_time = 0.0f, sync1_start_time = 0.0f,
+      sync1_last_time = 0.0f;  // 用于记录sync1的周期时间
+float pdi_cycle_time = 0.0f, pdi_start_time = 0.0f,
+      pdi_last_time = 0.0f;  // 用于记录pdi的周期时间
+#endif
 /**
  * @brief 外部中断回调
  *
@@ -523,16 +648,28 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 #if defined(MixedMode) && defined(DOIT_INLOOP)
   /* 检测是否有PDI中断 */
   if (GPIO_Pin == PDI_IRQ_Pin) {
-    // ESC_updateALevent();
-    // if (ESCvar.ALevent & ESCREG_ALEVENT_SM2) {
     pdi_isr_flag_ = 1;
-    no_pdi_msgs_ = 0;  // 重置看门狗计数器
-    // }
+#ifdef TEST_TIME
+    pdi_start_time = DWT_GetTimeline_ms();
+    pdi_cycle_time = pdi_start_time - pdi_last_time;  // 计算PDI中断周期时间
+    pdi_last_time = pdi_start_time;                   // 更新PDI中断结束时间
+#endif
   } else if (GPIO_Pin == SYNC0_IRQ_Pin) {
     sync0_isr_flag_ = 1;
-    no_sync0_msgs_ = 0;
+#ifdef TEST_TIME
+    sync0_start_time = DWT_GetTimeline_ms();
+    sync0_cycle_time =
+        sync0_start_time - sync0_last_time;  // 计算SYNC0中断周期时间
+    sync0_last_time = sync0_start_time;      // 更新SYNC0中断结束时间
+#endif
   } else if (GPIO_Pin == SYNC1_IRQ_Pin) {
     sync1_isr_flag_ = 1;
+#ifdef TEST_TIME
+    sync1_start_time = DWT_GetTimeline_ms();
+    sync1_cycle_time =
+        sync1_start_time - sync1_last_time;  // 计算SYNC1中断周期时间
+    sync1_last_time = sync1_start_time;      // 更新SYNC1中断结束时间
+#endif
   }
 #endif
 
@@ -594,7 +731,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
  * @param htim
  */
 #ifndef USE_LL_DRIVER
-#ifdef DEBUG
+#ifdef TEST_TIME
 float tim_current = 0, tim_last = 0;
 float tim_dt = 0;
 float tim_start = 0;
@@ -603,7 +740,7 @@ float tim_run_dt = 0;
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
   if (htim == &ESC_LOCAL_TIM) {
-#ifdef DEBUG
+#ifdef TEST_TIME
     tim_start = DWT_GetTimeline_ms();
     tim_current = DWT_GetTimeline_ms();
     tim_dt = tim_current - tim_last;
@@ -626,7 +763,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     }
 #endif
 
-#ifdef DEBUG
+#ifdef TEST_TIME
     tim_run_dt = DWT_GetTimeline_ms() - tim_start;  // 计算本次定时器运行的时间
 #endif
   }
@@ -644,19 +781,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 void LL_Local_TimerISR(void) {
   // 本地时钟看门狗
 #ifdef MixedMode
-  // DIG_process(DIG_PROCESS_WD_FLAG);
-  if ((ESCvar.ALstatus & (ESCsafeop | ESCerror)) == (ESCsafeop | ESCerror)) {
-    // 直接硬件复位
-    HAL_NVIC_SystemReset();
-  }
-
+  // if ((ESCvar.ALstatus & (ESCsafeop | ESCerror)) == (ESCsafeop | ESCerror)) {
+  //   // 直接硬件复位
+  //   HAL_NVIC_SystemReset();
+  // }
+  // ESC_dc_watchdog_feed();
   /* watch dog waiting */
-  // no_pdi_msgs_++;
-  no_sync0_msgs_++;
-  if (no_sync0_msgs_ > 10000) {
-    // 硬件复位，重头再来
-    HAL_NVIC_SystemReset();
-  }
 #endif
 
   LL_TIM_ClearFlag_UPDATE(LOCAL_TIM);
@@ -688,15 +818,6 @@ void LL_CAN1_Task_TimerISR(void) {
 void ESC_dc_watchdog_feed(void) { APP_setwatchdog(ESCvar.watchdogcnt); }
 
 /**
- * @brief （已弃用！）屏蔽其他事件使其只有SM2事件能够触发PDI
- *        不应该在这里直接屏蔽，应该在中断进入之后去检查
- *
- */
-void ESC_MaskePDI_OnlySM2(void) {
-  ESC_ALeventmaskwrite(MIXEDMODE_PDI_INT_MASK);
-}
-
-/**
  * @brief 解析出float 类型的转子位置
  *
  * @param pos_structor_
@@ -718,4 +839,74 @@ void handle_dji_motor_pos(DJI_Motor_Position_t *pos_structor_,
   pos_structor_->last_encoder_ = pos_structor_->cur_encoder_;
   pos_structor_->angle_splitter_.f =
       (float)(total_encoder * DJI_ENCODER_ANGLE_RATIO);
+}
+
+/**
+ * @brief 写一些看门狗操作
+ *
+ */
+void CAN0_watchdogCallback(void) {
+  //
+}
+
+/**
+ * @brief 写一些看门狗操作
+ *
+ */
+void CAN1_watchdogCallback(void) {}
+
+void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef *hcan) {
+#ifdef TEST_TIME
+  // 发送完成回调
+  CAN_QueueInstance *pQueue = (hcan == &CAN0_Handle) ? &can0Queue : &can1Queue;
+  pQueue->send_cycle_time =
+      DWT_GetTimeline_ms() - pQueue->send_cycle_last_time;  // 计算发送周期时间
+  pQueue->send_cycle_last_time = DWT_GetTimeline_ms();      // 更新发送周期时间
+  real_tx_success++;
+#endif
+
+#ifdef USE_CAN_TX_IDLE_INTERRUPT
+  if (hcan == &CAN0_Handle) {
+    ProcessCanQueue(1);
+  } else if (hcan == &CAN1_Handle) {
+    ProcessCanQueue(0);
+  }
+#endif
+}
+
+void HAL_CAN_TxMailbox1CompleteCallback(CAN_HandleTypeDef *hcan) {
+#ifdef TEST_TIME
+  CAN_QueueInstance *pQueue = (hcan == &CAN0_Handle) ? &can0Queue : &can1Queue;
+  pQueue->send_cycle_time =
+      DWT_GetTimeline_ms() - pQueue->send_cycle_last_time;  // 计算发送周期时间
+  pQueue->send_cycle_last_time = DWT_GetTimeline_ms();      // 更新发送周期时间
+  real_tx_success++;
+#endif
+
+#ifdef USE_CAN_TX_IDLE_INTERRUPT
+  if (hcan == &CAN0_Handle) {
+    ProcessCanQueue(1);
+  } else if (hcan == &CAN1_Handle) {
+    ProcessCanQueue(0);
+  }
+#endif
+}
+
+void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan) {
+#ifdef TEST_TIME
+  // 发送完成回调
+  CAN_QueueInstance *pQueue = (hcan == &CAN0_Handle) ? &can0Queue : &can1Queue;
+  pQueue->send_cycle_time =
+      DWT_GetTimeline_ms() - pQueue->send_cycle_last_time;  // 计算发送周期时间
+  pQueue->send_cycle_last_time = DWT_GetTimeline_ms();      // 更新发送周期时间
+  real_tx_success++;
+#endif
+
+#ifdef USE_CAN_TX_IDLE_INTERRUPT
+  if (hcan == &CAN0_Handle) {
+    ProcessCanQueue(1);
+  } else if (hcan == &CAN1_Handle) {
+    ProcessCanQueue(0);
+  }
+#endif
 }

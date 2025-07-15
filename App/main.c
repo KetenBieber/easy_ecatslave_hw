@@ -44,6 +44,12 @@ void MX_FREERTOS_Init(void);
 float main_current_time = 0, main_last_time = 0;  // 用于记录主循环的时间
 float main_dt = 0;
 
+extern uint32_t can0_tx_err_cnt;
+extern uint32_t can1_tx_err_cnt;
+
+extern uint32_t can0_queue_err_cnt;  // can0队列错误计数
+extern uint32_t can1_queue_err_cnt;  // can1队列错误计数
+
 int main(void) {
   HAL_Init();
 
@@ -70,23 +76,31 @@ int main(void) {
   /* we don't use freertos right now! */
   /* Infinite loop */
 
-  uint32_t dd = 0;
+  uint32_t heartbeat = 0;
   while (1) {
+#ifdef TEST_TIME
     main_current_time = DWT_GetTimeline_ms();
     main_dt = main_current_time - main_last_time;
-    // DIG_process(DIG_PROCESS_INPUTS_FLAG);
+#endif
+
     // 主循环只需这一个
     Ecatapp_Loop();
     // 指示while是否还健在
-    // if (ESC_ALeventmaskread() == 0xFFFFFFFF) {
-    // if (ESC_ALeventmaskread() == 0x0) {
-    if (dd++ > 1000) {
-      // HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
-      PCToggle(13);
-      dd = 0;
+    toggle_flash(&heartbeat, 15, 20000, 1000, 4);
+
+    if (can0_tx_err_cnt > 1000 || can0_queue_err_cnt > 1000) {
+      CAN_AppRestart(&CAN0_Handle);
+      can0_tx_err_cnt = 0;     // 重置错误计数
+      can0_queue_err_cnt = 0;  // 重置队列错误计数
+    } else if (can1_queue_err_cnt > 1000 || can1_tx_err_cnt > 1000) {
+      CAN_AppRestart(&CAN1_Handle);
+      can1_tx_err_cnt = 0;     // 重置错误计数
+      can1_queue_err_cnt = 0;  // 重置队列错误计数
     }
-    // }
+
+#ifdef TEST_TIME
     main_last_time = main_current_time;  // 更新主循环时间戳
+#endif
   }
 }
 

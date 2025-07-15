@@ -31,6 +31,7 @@ extern "C" {
 typedef struct {
   CAN_TxHeaderTypeDef header;
   uint8_t data[8];
+  float t_enqueue;  // 入队时间戳（cycle）
 } CAN_Message;
 
 typedef struct {
@@ -38,6 +39,17 @@ typedef struct {
   CAN_Message messages[CAN_QUEUE_SIZE];
   volatile uint32_t head;  // 队列头
   volatile uint32_t tail;  // 队列尾
+
+#ifdef TEST_TIME
+  // 统计指标
+  uint32_t max_queue_depth;   // 最大队列深度
+  float total_enqueue_delay;  // 总入队延迟
+  uint64_t enqueue_count;     // 入队计数
+  float avg_delay;            // 平均入队延迟
+  float send_cycle_time,
+      send_cycle_last_time;  // 发送周期时间,用于测量发送间隔
+#endif
+
 } CAN_QueueInstance;
 
 /*----------------------------------variable----------------------------------*/

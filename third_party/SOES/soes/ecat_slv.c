@@ -192,12 +192,12 @@ void DIG_process(uint8_t flags) {
   }
 
   /* Call application */
-  // if ((flags & DIG_PROCESS_APP_HOOK_FLAG) > 0) {
-  //   /* Call application callback if set */
-  //   if (ESCvar.application_hook != NULL) {
-  //     (ESCvar.application_hook)();
-  //   }
-  // }
+  if ((flags & DIG_PROCESS_APP_HOOK_FLAG) > 0) {
+    /* Call application callback if set */
+    if (ESCvar.application_hook != NULL) {
+      (ESCvar.application_hook)();
+    }
+  }
 
   /* Handle Inputs */
   if ((flags & DIG_PROCESS_INPUTS_FLAG) > 0) {

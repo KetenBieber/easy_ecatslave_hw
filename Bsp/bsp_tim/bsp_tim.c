@@ -8,7 +8,7 @@
  * @copyright Copyright (c) 2025
  *
  * @attention :
- * @note :
+ * @note : 注意定时器任务配置，需要让消费能力跟上生产能力（指can发送任务）
  * @versioninfo :
  */
 #include "bsp_tim.h"
@@ -49,7 +49,7 @@ void TIM_Configuration(void) {  // 1ms
   // 配置定时器初始化结构体
   TIM_InitStruct.Prescaler = 840 - 1;
   TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
-  TIM_InitStruct.Autoreload = 100 - 1;  // 10ms
+  TIM_InitStruct.Autoreload = 100 - 1;  // 1ms
   TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
 
   // 初始化定时器
@@ -117,7 +117,8 @@ void CAN0TASK_TIM_Configuration(void) {
   // 配置定时器初始化结构体
   TIM_InitStruct.Prescaler = 840 - 1;
   TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
-  TIM_InitStruct.Autoreload = 50 - 1;  // 10ms
+  TIM_InitStruct.Autoreload =
+      10 - 1;  // 0.5ms，执行一次定时器任务发送1帧的话，1s将有2000帧发送出
   TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
 
   // 初始化定时器
@@ -175,7 +176,7 @@ void CAN1TASK_TIM_Configuration(void) {
   // 配置定时器初始化结构体
   TIM_InitStruct.Prescaler = 840 - 1;
   TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
-  TIM_InitStruct.Autoreload = 50 - 1;  // 10ms
+  TIM_InitStruct.Autoreload = 10 - 1;  // 0.1ms
   TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
 
   // 初始化定时器

@@ -7,7 +7,7 @@
  *
  * @copyright Copyright (c) 2025
  *
- * @attention :
+ * @attention : 2025-07-03 新板子设计，需要对gpio方面做修改
  * @note :
  * @versioninfo :
  */
@@ -80,7 +80,7 @@ void SYNC0_Configuration(void) {
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(SYNC0_IRQ_GPIO_Port, &GPIO_InitStruct);
 
-  HAL_NVIC_SetPriority(SYNC0_IRQ_EXTI_IRQn, 1, 1);
+  HAL_NVIC_SetPriority(SYNC0_IRQ_EXTI_IRQn, 0, 0);
   // HAL_NVIC_EnableIRQ(SYNC0_IRQ_EXTI_IRQn);  // 不允许在此处使能
 }
 
@@ -95,7 +95,7 @@ void SYNC1_Configuration(void) {
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(SYNC1_IRQ_GPIO_Port, &GPIO_InitStruct);
 
-  HAL_NVIC_SetPriority(SYNC1_IRQ_EXTI_IRQn, 1, 1);
+  HAL_NVIC_SetPriority(SYNC1_IRQ_EXTI_IRQn, 0, 0);
   // HAL_NVIC_EnableIRQ(SYNC1_IRQ_EXTI_IRQn);  // 不允许在此处使能
 }
 
@@ -135,6 +135,9 @@ void Photogate_Configuration(void) {
   PHOTOGATE_1_GPIO_CLK_ENABLE;
   PHOTOGATE_2_GPIO_CLK_ENABLE;
   PHOTOGATE_3_GPIO_CLK_ENABLE;
+  PHOTOGATE_REFERENCE_GPIO_CLK_ENABLE;
+  HAL_GPIO_WritePin(PHOTOGATE_REFERENCE_GPIO_Port, PHOTOGATE_REFERENCE_Pin,
+                    GPIO_PIN_RESET);
 
   GPIO_InitStruct.Pin = PHOTOGATE1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
@@ -147,4 +150,12 @@ void Photogate_Configuration(void) {
 
   GPIO_InitStruct.Pin = PHOTOGATE3_Pin;
   HAL_GPIO_Init(PHOTOGATE3_GPIO_Port, &GPIO_InitStruct);
+
+  GPIO_InitStruct.Pin = PHOTOGATE_REFERENCE_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;    // 设置参考光电门为输出模式
+  GPIO_InitStruct.Pull = GPIO_PULLUP;            // 上拉
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;  // 设置速度为高速
+  HAL_GPIO_Init(PHOTOGATE_REFERENCE_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_WritePin(PHOTOGATE_REFERENCE_GPIO_Port, PHOTOGATE_REFERENCE_Pin,
+                    GPIO_PIN_RESET);  // 设置参考光电门为高电平
 }

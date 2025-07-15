@@ -229,6 +229,14 @@ void EXTI3_IRQHandler(void) {
   /* USER CODE END EXTI3_IRQn 1 */
 }
 
+void CAN1_TX_IRQHandler(void) { HAL_CAN_IRQHandler(&hcan1); }
+
+void CAN2_TX_IRQHandler(void) { HAL_CAN_IRQHandler(&hcan2); }
+
+void CAN1_SCE_IRQHandler(void) { HAL_CAN_IRQHandler(&hcan1); }
+
+void CAN2_SCE_IRQHandler(void) { HAL_CAN_IRQHandler(&hcan2); }
+
 /**
  * @brief This function handles CAN1 RX0 interrupts.
  */

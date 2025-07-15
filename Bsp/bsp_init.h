@@ -41,8 +41,11 @@ void BSP_Init(void) {
   CAN0TASK_TIM_Configuration();
   CAN1TASK_TIM_Configuration();
   /* 从站应用层外设初始化 */
+
   /* can总线硬件初始化 */
-  CAN_Configuration();
+  CAN_Configuration(&CAN0_Handle);
+  CAN_Configuration(&CAN1_Handle);
+
   /* 板上外设初始化 */
   LED_Configuration();
   // Key_Configuration();
@@ -55,6 +58,7 @@ void BSP_Init(void) {
                   CanFilter_0 | CanFifo_0 | Can_STDID | Can_DataType, 0, 0);
   CAN_Filter_Init(&CAN0_Handle,
                   CanFilter_1 | CanFifo_1 | Can_STDID | Can_DataType, 0, 0);
+
 #ifndef ONLY_CAN0
   // 使用扩展帧
   CAN_Init(&CAN1_Handle);

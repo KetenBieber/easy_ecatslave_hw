@@ -83,10 +83,21 @@
     },
     {
       /* 使用cmake构建项目，编译生成可执行项目之后，烧录到单片机中 */
-      "label": "[download]",
+      "label": "[download]-[Debug]",
       "type": "shell",
       /* 通过CMake提供的add_custom_target运行JFlash命令 */
       "command": "cmake --build --preset Debug --target download_jlink",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+    },
+    {
+      /* 使用cmake构建项目，编译生成可执行项目之后，烧录到单片机中 */
+      "label": "[download]-[Release]",
+      "type": "shell",
+      /* 通过CMake提供的add_custom_target运行JFlash命令 */
+      "command": "cmake --build --preset Release --target download_jlink",
       "group": {
         "kind": "test",
         "isDefault": true

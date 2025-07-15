@@ -96,9 +96,8 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
 
     # Add user defined symbols
     # use these symbols to choose which mode:FreeRun/Mixed Mode/Interrupt Mode
-    FreeRun
-
-    # MixedMode
+    # FreeRun
+    MixedMode
 
     # InterruptMode
 
@@ -106,13 +105,19 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     TEST_SWERVE
 
     # 测试can发送任务队列
-    # IF_USE_SENDQUEUE
+    IF_USE_SENDQUEUE
 
     # 使用LL库作为HAL库的底层驱动
     USE_LL_DRIVER
 
     # 使用DMA的SPI
-    USE_DMA_SPI
+    # USE_DMA_SPI
+
+    # 试一下用can tx发送空闲中断来逼近理论极限
+    # USE_CAN_TX_IDLE_INTERRUPT
+
+    # 测试耗时的程序，可以关了
+    # TEST_TIME
 )
 
 # Add linked libraries

@@ -19,6 +19,8 @@ extern "C" {
 #endif
 
 /*----------------------------------include-----------------------------------*/
+#include <stdbool.h>
+
 #include "esc_config.h"
 #include "stm32f4xx_hal.h"
 
@@ -78,29 +80,82 @@ extern uint8_t CAN1Fifo1_RxDataBuf[8];
 extern CAN_TxHeaderTypeDef CAN0_TxHeader;
 extern CAN_TxHeaderTypeDef CAN1_TxHeader;
 
+extern bool start_can0_watchdog;  // can0看门狗是否启动
+extern bool start_can1_watchdog;  // can1看门狗是否启动
+
 /*----------------------------------function----------------------------------*/
+
+void CAN_Configuration(CAN_HandleTypeDef* hcan);
+
 void CAN_Init(CAN_HandleTypeDef* hcan);
 
 /**
- * @brief 需用用户自己提供实现
+ * @brief 需用用户自己提供实现，初始化can帧头部信息，减少赋值开销
  *
  * @param hcan
  */
 void CAN_TxHeader_Init(void);
-void pCAN0_RxCpltCallback(CAN_HandleTypeDef* hcan,
-                          CAN_RxHeaderTypeDef* temp_rxheader,
-                          const uint8_t* data);
-void pCAN1_RxCpltCallback(CAN_HandleTypeDef* hcan,
-                          CAN_RxHeaderTypeDef* temp_rxheader,
-                          const uint8_t* data);
 
+/**
+ * @brief 配置看门狗参数
+ *        需要初始化完DWT之后才可使用
+ *
+ * @param timeout
+ * @param ifCan1 如果是can1，则为true，否则为can0
+ */
+void configWatchdog(float timeout, bool ifCan1);
+
+/**
+ * @brief can0接收看门狗处理
+ *
+ */
+void CAN0_watchdogCallback(void);
+
+/**
+ * @brief can1接收看门狗处理
+ *
+ */
+void CAN1_watchdogCallback(void);
+
+/**
+ * @brief can0回调
+ *
+ * @param hcan
+ * @param temp_rxheader
+ * @param data
+ */
+void CAN0_RxCpltCallback(CAN_HandleTypeDef* hcan,
+                         CAN_RxHeaderTypeDef* temp_rxheader,
+                         const uint8_t* data);
+
+/**
+ * @brief can1回调
+ *
+ * @param hcan
+ * @param temp_rxheader
+ * @param data
+ * @return * void
+ */
+void CAN1_RxCpltCallback(CAN_HandleTypeDef* hcan,
+                         CAN_RxHeaderTypeDef* temp_rxheader,
+                         const uint8_t* data);
+
+/**
+ * @brief CAN过滤器初始化 ，具体配置参考头文件
+ *
+ * @param hcan
+ * @param object_para
+ * @param Id
+ * @param MaskId
+ */
 void CAN_Filter_Init(CAN_HandleTypeDef* hcan, uint8_t object_para, uint32_t Id,
                      uint32_t MaskId);
 
-void CAN_Transmit_ExtId(CAN_HandleTypeDef* hcan, CAN_TxHeaderTypeDef* TxHeader,
-                        uint8_t data[], int length);
-void CAN_Transmit_StdId(CAN_HandleTypeDef* hcan, CAN_TxHeaderTypeDef* TxHeader,
-                        uint8_t data[], int length);
+/**
+ * @brief 重启can控制器函数
+ *
+ * @param hcan
+ */
 void CAN_AppRestart(CAN_HandleTypeDef* hcan);
 
 #ifdef __cplusplus
