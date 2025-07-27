@@ -61,6 +61,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 )
 
 include_sub_directories_recursively(${CMAKE_SOURCE_DIR}/App)
+include_sub_directories_recursively(${CMAKE_SOURCE_DIR}/Algorithm)
 include_sub_directories_recursively(${CMAKE_SOURCE_DIR}/Bsp)
 include_sub_directories_recursively(${CMAKE_SOURCE_DIR}/Core)
 include_sub_directories_recursively(${CMAKE_SOURCE_DIR}/Drivers)
@@ -118,6 +119,12 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
 
     # 测试耗时的程序，可以关了
     # TEST_TIME
+
+    # 测试编码器解包率
+    TEST_ENCODER_TIME
+
+    # 编码器上车
+    USE_ENCODER
 )
 
 # Add linked libraries

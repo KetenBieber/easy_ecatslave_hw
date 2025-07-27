@@ -39,6 +39,10 @@ void LED_Configuration(void);
 
 void Key_Configuration(void);
 
+void EncoderRs485IO_DE_Configuration(void);
+
+void ShooterIO_Configuration(void);
+
 #ifdef __cplusplus
 }
 #endif

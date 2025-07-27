@@ -69,38 +69,29 @@
 
 // 单独操作 GPIO的某一个IO口，n(0,1,2...15),
 // n表示具体是哪一个IO口
-#define PAout(n) BIT_ADDR(GPIOA_ODR_Addr, n)  //输出
-#define PAin(n) BIT_ADDR(GPIOA_IDR_Addr, n)   //输入
+#define PAout(n) BIT_ADDR(GPIOA_ODR_Addr, n)  // 输出
+#define PAin(n) BIT_ADDR(GPIOA_IDR_Addr, n)   // 输入
 
-#define PBout(n) BIT_ADDR(GPIOB_ODR_Addr, n)  //输出
-#define PBin(n) BIT_ADDR(GPIOB_IDR_Addr, n)   //输入
+#define PBout(n) BIT_ADDR(GPIOB_ODR_Addr, n)  // 输出
+#define PBin(n) BIT_ADDR(GPIOB_IDR_Addr, n)   // 输入
 
-#define PCout(n) BIT_ADDR(GPIOC_ODR_Addr, n)  //输出
-#define PCin(n) BIT_ADDR(GPIOC_IDR_Addr, n)   //输入
+#define PCout(n) BIT_ADDR(GPIOC_ODR_Addr, n)  // 输出
+#define PCin(n) BIT_ADDR(GPIOC_IDR_Addr, n)   // 输入
 
-#define PDout(n) BIT_ADDR(GPIOD_ODR_Addr, n)  //输出
-#define PDin(n) BIT_ADDR(GPIOD_IDR_Addr, n)   //输入
+#define PDout(n) BIT_ADDR(GPIOD_ODR_Addr, n)  // 输出
+#define PDin(n) BIT_ADDR(GPIOD_IDR_Addr, n)   // 输入
 
-#define PEout(n) BIT_ADDR(GPIOE_ODR_Addr, n)  //输出
-#define PEin(n) BIT_ADDR(GPIOE_IDR_Addr, n)   //输入
+#define PEout(n) BIT_ADDR(GPIOE_ODR_Addr, n)  // 输出
+#define PEin(n) BIT_ADDR(GPIOE_IDR_Addr, n)   // 输入
 
-#define PFout(n) BIT_ADDR(GPIOF_ODR_Addr, n)  //输出
-#define PFin(n) BIT_ADDR(GPIOF_IDR_Addr, n)   //输入
+#define PFout(n) BIT_ADDR(GPIOF_ODR_Addr, n)  // 输出
+#define PFin(n) BIT_ADDR(GPIOF_IDR_Addr, n)   // 输入
 
-#define PGout(n) BIT_ADDR(GPIOG_ODR_Addr, n)  //输出
-#define PGin(n) BIT_ADDR(GPIOG_IDR_Addr, n)   //输入
+#define PGout(n) BIT_ADDR(GPIOG_ODR_Addr, n)  // 输出
+#define PGin(n) BIT_ADDR(GPIOG_IDR_Addr, n)   // 输入
 
-#define PHout(n) BIT_ADDR(GPIOH_ODR_Addr, n)  //输出
-#define PHin(n) BIT_ADDR(GPIOH_IDR_Addr, n)   //输入
-
-#define PIout(n) BIT_ADDR(GPIOI_ODR_Addr, n)  //输出
-#define PIin(n) BIT_ADDR(GPIOI_IDR_Addr, n)   //输入
-
-#define PJout(n) BIT_ADDR(GPIOJ_ODR_Addr, n)  //输出
-#define PJin(n) BIT_ADDR(GPIOJ_IDR_Addr, n)   //输入
-
-#define PKout(n) BIT_ADDR(GPIOK_ODR_Addr, n)  //输出
-#define PKin(n) BIT_ADDR(GPIOK_IDR_Addr, n)   //输入
+#define PHout(n) BIT_ADDR(GPIOH_ODR_Addr, n)  // 输出
+#define PHin(n) BIT_ADDR(GPIOH_IDR_Addr, n)   // 输入
 
 /* 翻转输出io */
 #define PAToggle(n) (PAout(n) ^= 1)
@@ -111,6 +102,3 @@
 #define PFToggle(n) (PFout(n) ^= 1)
 #define PGToggle(n) (PGout(n) ^= 1)
 #define PHToggle(n) (PHout(n) ^= 1)
-#define PIToggle(n) (PIout(n) ^= 1)
-#define PJToggle(n) (PJout(n) ^= 1)
-#define PKToggle(n) (PKout(n) ^= 1)

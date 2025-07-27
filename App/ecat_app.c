@@ -25,7 +25,9 @@
  */
 #include "ecat_app.h"
 
+#include "encoder_app.h"
 #include "stm32f4xx_ll_tim.h"
+#include "ws2812led_app.h"
 
 /* global variable */
 _Objects Obj;
@@ -44,6 +46,16 @@ uint32_t can0_queue_err_cnt = 0;  // can0队列错误计数
 uint32_t can1_queue_err_cnt = 0;  // can1队列错误计数
 uint32_t can0_queue_cnt = 0;
 uint32_t can1_queue_cnt = 0;  // can0和can1队列计数
+
+int start_led = 0;
+int set_encoder_zero = 0;  // 设置编码器归零标志位
+uint8_t last_io3_state = 0;
+
+extern bool can0_no_msg;
+extern bool can1_no_msg;
+
+// 编码器值
+extern EncoderData encoder_data;
 
 #ifdef TEST_TIME
 float can0_queue_arbitration_lost = 0.0f;    // can0队列仲裁时间
@@ -111,6 +123,10 @@ void cb_get_inputs(void) {
   Obj.input_io.io1 = PGin(0);
   Obj.input_io.io2 = PGin(1);
   Obj.input_io.io3 = PGin(2);
+
+  handle_encoder_pos(&encoder_data);
+  Obj.can0_motor_positions[5] = encoder_data.angle_splitter.i16[0];
+  Obj.can0_motor_currents[5] = encoder_data.angle_splitter.i16[1];
   // Obj.input_io.io2 = PDin(7);
   // Obj.input_io.io3 = PGin(10);
   /* can总线上电机，将直接由can的接收中断进行打包 */
@@ -126,13 +142,33 @@ float setOutput_run_time = 0.0f;
  *
  */
 void cb_set_outputs(void) {
+  if (start_led == 0) {
+    switch_cur_state = -1;  // 开机动画
+    start_led = 1;
+  }
 #ifdef TEST_TIME
   current_time = DWT_GetTimeline_ms();
   dt = current_time - last_time;
   last_time = current_time;
 #endif
   /* 有8个可控io */
-  //
+  // 电磁阀 io 控制
+  PAout(3) = Obj.output_io.io1;  // 1号io
+
+  if (Obj.output_io.io1 == 1) {
+    if_shoot = 2;  // 设置为2，表示开火 这个标志位只在状态机中被取消
+  }
+  if (Obj.output_io.io2 == 1 && Obj.output_io.io1 == 0) {
+    if_shoot = 1;  // 设置为1 ,表示蓄能
+  }
+
+  uint8_t cur_io3 = Obj.output_io.io3;
+  if (cur_io3 && !last_io3_state) {
+    set_encoder_zero = 1;
+  }
+  last_io3_state = cur_io3;
+
+  // can 命令下发
   CAN0_TxHeader.StdId = 0x200;
   can_txData[0] = (Obj.can0_motor_commands[0] >> 8u);
   can_txData[1] = Obj.can0_motor_commands[0];
@@ -222,8 +258,8 @@ void cb_set_outputs(void) {
 #endif
 
 #ifndef ONLY_CAN0
-  /* 3个电机 */
-  for (int i = 1; i <= 3; i++) {
+  /* 4个电机 */
+  for (int i = 1; i <= 4; i++) {
     CAN1_TxHeader.ExtId = (CAN_CMD_SET_ERPM << 8 | i);
     CAN1_TxHeader.IDE = CAN_ID_EXT;
     if (Obj.vesc_can1_commands[i - 1] == 0) {
@@ -307,7 +343,7 @@ void setZeroOutputs(void) {
 
 #ifndef ONLY_CAN0
   // 往can1上发送空数据
-  for (int i = 1; i <= 3; i++) {
+  for (int i = 1; i <= 4; i++) {
     CAN1_TxHeader.ExtId = (CAN_CMD_SET_ERPM << 8 | i);
     CAN1_TxHeader.IDE = CAN_ID_EXT;
     // 如果目标转速为0，发送刹车指令
@@ -350,6 +386,9 @@ void _post_sdo_callback(uint16_t index, uint8_t subindex, uint16_t flags) {
  *
  */
 void _safeoutput_callback(void) {
+  // 关闭LED任务
+  switch_cur_state = -2;
+  start_led = 0;
   // 往can0发送空数据
   CAN0_TxHeader.StdId = 0x200;
   uint32_t tx_mailbox = 0;
@@ -363,7 +402,7 @@ void _safeoutput_callback(void) {
 
 #ifndef ONLY_CAN0
   // 往can1上发送空数据
-  for (int i = 1; i <= 3; i++) {
+  for (int i = 1; i <= 4; i++) {
     CAN1_TxHeader.ExtId = (CAN_CMD_SET_ERPM << 8 | i);
     CAN1_TxHeader.IDE = CAN_ID_EXT;
     // 如果目标转速为0，发送刹车指令
@@ -430,6 +469,8 @@ void _can0_receive_callback(CAN_HandleTypeDef *hcan,
                             const uint8_t *data) {
   uint8_t index = rxheader->StdId - 0x201;
   if (hcan == &CAN0_Handle) {
+#ifdef USE_ENCODER
+#endif
     handle_dji_motor_pos(&dji_motor_pos_[index], data);
     // 位置位存放低8位,电流位存放高8位
     Obj.can0_motor_positions[index] =
@@ -640,7 +681,7 @@ float pdi_cycle_time = 0.0f, pdi_start_time = 0.0f,
       pdi_last_time = 0.0f;  // 用于记录pdi的周期时间
 #endif
 /**
- * @brief 外部中断回调
+ * @brief 外部中断回调重载
  *
  * @param GPIO_Pin
  */
@@ -778,17 +819,50 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 }
 
 #else
+extern int if_ws2812_init;  // ws2812灯条初始化标志位
+
+enum WS2812_LED_Status main_led_task = LAUNCH_BREATH;
+
 void LL_Local_TimerISR(void) {
   // 本地时钟看门狗
 #ifdef MixedMode
-  // if ((ESCvar.ALstatus & (ESCsafeop | ESCerror)) == (ESCsafeop | ESCerror)) {
-  //   // 直接硬件复位
-  //   HAL_NVIC_SystemReset();
-  // }
-  // ESC_dc_watchdog_feed();
-  /* watch dog waiting */
+
 #endif
 
+  // 顺便做can总线监测
+  CAN_Watchdog_Task();
+
+  // 在这里做RGB灯条状态更新
+
+  static WS2812_BeamEffect_t beam;
+  if (!if_ws2812_init) {
+  } else {
+    switch (main_led_task) {
+      case STOP_ACT: {
+        main_led_task = StopLEDTask();
+        break;
+      }
+      case LAUNCH_BREATH: {
+        main_led_task = LaunchLEDTask();
+        break;
+      }
+      case DAEMON_MODE: {
+        main_led_task = DaemonTask();
+        break;
+      }
+      case SHOOT_MODE: {
+        main_led_task = ShootTask();
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  if (set_encoder_zero) {
+    set_encoder_zero = 0;
+    Encoder_SetZero();
+  }
   LL_TIM_ClearFlag_UPDATE(LOCAL_TIM);
 }
 
@@ -845,15 +919,13 @@ void handle_dji_motor_pos(DJI_Motor_Position_t *pos_structor_,
  * @brief 写一些看门狗操作
  *
  */
-void CAN0_watchdogCallback(void) {
-  //
-}
+void CAN0_watchdogCallback(void) { can0_no_msg = true; }
 
 /**
  * @brief 写一些看门狗操作
  *
  */
-void CAN1_watchdogCallback(void) {}
+void CAN1_watchdogCallback(void) { can1_no_msg = true; }
 
 void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef *hcan) {
 #ifdef TEST_TIME

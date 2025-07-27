@@ -118,7 +118,7 @@ void CAN0TASK_TIM_Configuration(void) {
   TIM_InitStruct.Prescaler = 840 - 1;
   TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
   TIM_InitStruct.Autoreload =
-      10 - 1;  // 0.5ms，执行一次定时器任务发送1帧的话，1s将有2000帧发送出
+      10 - 1;  // 0.1ms，执行一次定时器任务发送1帧的话，1s将有2000帧发送出
   TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
 
   // 初始化定时器
@@ -299,4 +299,103 @@ void StartTimer(void) {
   LL_CAN0_TASK_TIM_Base_Start_IT();  // 开启can任务定时器计数器
   LL_CAN1_TASK_TIM_Base_Start_IT();  // 开启can任务定时器计数器
 #endif
+}
+
+void WS2812_TIM_Configuration(void) {
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+  TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig = {0};
+
+  WS2812_TIM.Instance = WS2812_TIM_INSTANCE;
+  WS2812_TIM.Init.Prescaler = 0;
+  WS2812_TIM.Init.CounterMode = TIM_COUNTERMODE_UP;
+  WS2812_TIM.Init.Period = 210 - 1;
+  WS2812_TIM.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  WS2812_TIM.Init.RepetitionCounter = 0;
+  WS2812_TIM.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_PWM_Init(&WS2812_TIM) != HAL_OK) {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&WS2812_TIM, &sMasterConfig) !=
+      HAL_OK) {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
+  sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+  if (HAL_TIM_PWM_ConfigChannel(&WS2812_TIM, &sConfigOC, WS2812_TIM_Channel) !=
+      HAL_OK) {
+    Error_Handler();
+  }
+  sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
+  sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
+  sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
+  sBreakDeadTimeConfig.DeadTime = 0;
+  sBreakDeadTimeConfig.BreakState = TIM_BREAK_DISABLE;
+  sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
+  sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_DISABLE;
+  if (HAL_TIMEx_ConfigBreakDeadTime(&WS2812_TIM, &sBreakDeadTimeConfig) !=
+      HAL_OK) {
+    Error_Handler();
+  }
+
+  HAL_TIM_MspPostInit(&WS2812_TIM);
+}
+
+void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* tim_pwmHandle) {
+  if (tim_pwmHandle->Instance == WS2812_TIM_INSTANCE) {
+    WS2812_TIM_RCC_CLK_ENABLE;
+    WS2812_TIM_PWM_DMA_RCC_CLK_ENABLE;
+    WS2812_TIM_PWM_DMA.Instance = WS2812_TIM_PWM_DMA_Instance;
+    WS2812_TIM_PWM_DMA.Init.Channel = WS2812_TIM_PWM_DMA_Channel;
+    WS2812_TIM_PWM_DMA.Init.Direction = DMA_MEMORY_TO_PERIPH;
+    WS2812_TIM_PWM_DMA.Init.PeriphInc = DMA_PINC_DISABLE;
+    WS2812_TIM_PWM_DMA.Init.MemInc = DMA_MINC_ENABLE;  // 内存地址自增
+    WS2812_TIM_PWM_DMA.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
+    WS2812_TIM_PWM_DMA.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
+    WS2812_TIM_PWM_DMA.Init.Mode = DMA_CIRCULAR;
+    WS2812_TIM_PWM_DMA.Init.Priority = DMA_PRIORITY_LOW;
+    WS2812_TIM_PWM_DMA.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    if (HAL_DMA_Init(&WS2812_TIM_PWM_DMA) != HAL_OK) {
+      Error_Handler();
+    }
+    __HAL_LINKDMA(tim_pwmHandle, hdma[TIM_DMA_ID_CC2], WS2812_TIM_PWM_DMA);
+  } else {
+  }
+}
+
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle) {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+  if (timHandle->Instance == WS2812_TIM_INSTANCE) {
+    WS2812_GPIO_RCC_CLK_ENABLE;
+    GPIO_InitStruct.Pin = WS2812_GPIO_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Alternate = GPIO_AF3_TIM8;
+    HAL_GPIO_Init(WS2812_GPIO_Port, &GPIO_InitStruct);
+  } else {
+  }
+}
+
+void HAL_TIM_PWM_MspDeInit(TIM_HandleTypeDef* tim_pwmHandle) {
+  if (tim_pwmHandle->Instance == WS2812_TIM_INSTANCE) {
+    WS2812_TIM_RCC_CLK_DISABLE;
+
+    HAL_DMA_DeInit(tim_pwmHandle->hdma[TIM_DMA_ID_CC2]);
+  }
+}
+
+void WS2812_DMA_Configuration(void) {
+  /* DMA2_Stream6_IRQn interrupt configuration */
+  WS2812_TIM_PWM_DMA_RCC_CLK_ENABLE;
+  HAL_NVIC_SetPriority(WS2812_TIM_DMA_STREAM_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(WS2812_TIM_DMA_STREAM_IRQn);
 }

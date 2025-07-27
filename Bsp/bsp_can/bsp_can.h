@@ -83,6 +83,9 @@ extern CAN_TxHeaderTypeDef CAN1_TxHeader;
 extern bool start_can0_watchdog;  // can0看门狗是否启动
 extern bool start_can1_watchdog;  // can1看门狗是否启动
 
+extern bool can0_no_msg;
+extern bool can1_no_msg;
+
 /*----------------------------------function----------------------------------*/
 
 void CAN_Configuration(CAN_HandleTypeDef* hcan);
@@ -157,6 +160,12 @@ void CAN_Filter_Init(CAN_HandleTypeDef* hcan, uint8_t object_para, uint32_t Id,
  * @param hcan
  */
 void CAN_AppRestart(CAN_HandleTypeDef* hcan);
+
+/**
+ * @brief
+ *
+ */
+void CAN_Watchdog_Task(void);
 
 #ifdef __cplusplus
 }

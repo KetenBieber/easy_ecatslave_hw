@@ -159,3 +159,31 @@ void Photogate_Configuration(void) {
   HAL_GPIO_WritePin(PHOTOGATE_REFERENCE_GPIO_Port, PHOTOGATE_REFERENCE_Pin,
                     GPIO_PIN_RESET);  // 设置参考光电门为高电平
 }
+
+// 配置RS485的DE引脚
+void EncoderRs485IO_DE_Configuration(void) {
+  GPIO_InitTypeDef GPIO_InitTypeDef = {0};
+  // 使能GPIO时钟
+  HAL_GPIO_WritePin(ENCODER_RS485_DE_GPIO_Port, ENCODER_RS485_DE_Pin,
+                    GPIO_PIN_RESET);
+  GPIO_InitTypeDef.Pin = ENCODER_RS485_DE_Pin;
+  GPIO_InitTypeDef.Mode = GPIO_MODE_OUTPUT_PP;    // 设置为推挽输出模式
+  GPIO_InitTypeDef.Pull = GPIO_PULLUP;            // 上拉
+  GPIO_InitTypeDef.Speed = GPIO_SPEED_FREQ_HIGH;  // 设置速度为高速
+  HAL_GPIO_Init(ENCODER_RS485_DE_GPIO_Port, &GPIO_InitTypeDef);
+  HAL_GPIO_WritePin(ENCODER_RS485_DE_GPIO_Port, ENCODER_RS485_DE_Pin,
+                    GPIO_PIN_RESET);  // 默认拉低DE引脚
+}
+
+void ShooterIO_Configuration(void) {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  // 拉低IO
+  HAL_GPIO_WritePin(SHOOT_GPIO_Port, SHOOT_GPIO_Pin, SHOOT_INIT_STATE);
+
+  GPIO_InitStruct.Pin = SHOOT_GPIO_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;    // 设置为推挽输出模式
+  GPIO_InitStruct.Pull = GPIO_PULLUP;            // 上拉
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;  // 设置速度为高速
+  HAL_GPIO_Init(SHOOT_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_WritePin(SHOOT_GPIO_Port, SHOOT_GPIO_Pin, SHOOT_INIT_STATE);
+}

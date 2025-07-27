@@ -43,3 +43,43 @@
 5. can控制器相关
    - can总线在本项目开发中属于相对困难开发的点，由于其在具体使用中出现许多平时从未遇到的问题，而这些问题通常在单以stm32作为主控时被忽略（复位大法），然而在ethercat主从站开发中，从站稳定的运行是地基，否则即使主站正常运行，执行器也无法完成对应任务
    - 因此本项目采样许多防范措施，并且测试了极限的can控制器性能
+6. 主程序与中断程序的交互(裸机版本,由于没有信号量等机制)
+   - 在中断程序中使用原子操作，避免中断程序与主程序之间的冲突 
+   ```cpp
+    #define LOCKED 1
+    #define UNLOCKED 0
+
+    uint8_t Sys_IsLocked(volatile uint8_t* lock){
+      return __LDREXB(lock);
+    }
+
+    uint8_t Sys_GetLock(volatile uint8_t* lock,uint32_t timeout_ms){
+      uint32_t st_ms = HAL_GetTick();
+      int status;
+      do{
+        if ((HAL_GetTick() - st_ms) > timeout_ms) return 0;  // 超时失败
+        status = __LDREXB(lock);  // 独占读取
+      }while(status == LOCKED || __STREXB(lock, LOCKED) ); // 已锁定或写入失败则重试
+      return 1; // 成功获取锁
+    }
+
+    uint8_t Sys_GetLockOnce(volatile uint8_t* lock){
+      int status = __LDREXB(lock);
+      if(status == LOCKED) return 0;
+      return (!__STREXB(lock, LOCKED)); // 成功获取锁
+    }
+
+    // 释放锁
+    void Sys_FreeLock(volatile uint8_t* lock){
+      *lock = UNLOCKED; // 直接写入解锁状态
+    }
+    ```
+
+7. 使用DWT对程序运行周期进行测量:
+  ```cpp
+  uint32_t start = DWT->CYCCNT;
+  float dt_s;
+  // main loop code
+
+  dt_s = DWT_GetDeltaT(&start); // dt_s为秒
+  ```

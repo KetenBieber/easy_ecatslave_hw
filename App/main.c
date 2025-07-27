@@ -37,6 +37,7 @@
 #include "bsp_init.h"
 #include "ecat_app.h"
 #include "esc_config.h"
+#include "ws2812led_app.h"
 
 void SystemClock_Config(void);
 void MX_FREERTOS_Init(void);
@@ -77,6 +78,8 @@ int main(void) {
   /* Infinite loop */
 
   uint32_t heartbeat = 0;
+  uint32_t debug = 0;
+  uint32_t a = 0;
   while (1) {
 #ifdef TEST_TIME
     main_current_time = DWT_GetTimeline_ms();
@@ -97,6 +100,14 @@ int main(void) {
       can1_tx_err_cnt = 0;     // 重置错误计数
       can1_queue_err_cnt = 0;  // 重置队列错误计数
     }
+
+    // if (debug++ >= 1000) {
+    //   for (int i = 0; i <= LED_NUM; i++) {
+    //     WS2812_SetSingle(i, 10 * i + a, 5 * i + a, 10 * i + a);
+    //   }
+    //   debug = 0;
+    //   a += 10;
+    // }
 
 #ifdef TEST_TIME
     main_last_time = main_current_time;  // 更新主循环时间戳
@@ -152,7 +163,8 @@ void SystemClock_Config(void) {
  */
 void Error_Handler(void) {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
+  /* User can add his own implementation to report the HAL error return state
+   */
   __disable_irq();
   while (1) {
   }
@@ -170,8 +182,8 @@ void Error_Handler(void) {
 void assert_failed(uint8_t *file, uint32_t line) {
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line
-     number, ex: printf("Wrong parameters value: file %s on line %d\r\n", file,
-     line) */
+     number, ex: printf("Wrong parameters value: file %s on line %d\r\n",
+     file, line) */
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */

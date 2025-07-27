@@ -35,17 +35,6 @@ extern "C" {
 // Only SM2 should be masked to generate PDI interrupt
 #define MIXEDMODE_PDI_INT_MASK ESCREG_ALEVENT_SM2
 
-#define CAN_TX_ERR_CNT_MAX 5000  // 最大的发送错误次数
-
-/* vesc relative */
-#define CAN_PACKET_STATUS 9  // 电流&转速 接收数据包标识符
-// 控制命令枚举
-#define CAN_CMD_SET_CURRENT 0x01
-#define CAN_CMD_SET_ERPM 0x03
-#define CAN_CMD_SET_BRAKE 0x02
-
-#define BRAKE_CURRENT 6000  // 刹车电流
-
 /*----------------------------------variable----------------------------------*/
 
 extern CAN_TxHeaderTypeDef CAN0_TxHeader;

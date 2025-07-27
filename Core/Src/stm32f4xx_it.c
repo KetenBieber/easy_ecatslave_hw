@@ -22,8 +22,12 @@
 
 #include "main.h"
 #include "stm32f4xx_ll_dma.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+
+#include "bsp_uart.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -62,6 +66,10 @@ extern CAN_HandleTypeDef hcan2;
 extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim4;
+
+extern DMA_HandleTypeDef hdma_usart6_rx;
+extern DMA_HandleTypeDef hdma_usart6_tx;
+extern UART_HandleTypeDef huart6;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -215,7 +223,6 @@ void EXTI1_IRQHandler(void) {
 
   /* USER CODE END EXTI1_IRQn 1 */
 }
-
 /**
  * @brief This function handles EXTI line3 interrupt.
  */
@@ -331,6 +338,7 @@ void CAN2_RX1_IRQHandler(void) {
   /* USER CODE END CAN2_RX1_IRQn 1 */
 }
 
+#ifdef USE_DMA_SPI
 /**
  * @brief This function handles DMA2 stream3 global interrupt.
  */
@@ -339,6 +347,28 @@ void DMA2_Stream3_IRQHandler(void) {
     // LL_DMA_ClearFlag_TC3(DMA2);
     // 处理DMA传输完成的逻辑
   }
+}
+#endif
+
+/**
+ * @brief This function handles DMA2 stream6 global interrupt.
+ */
+void DMA2_Stream6_IRQHandler(void) { HAL_DMA_IRQHandler(&hdma_usart6_tx); }
+
+/**
+ * @brief This function handles DMA2 stream1 global interrupt.
+ */
+void DMA2_Stream1_IRQHandler(void) { HAL_DMA_IRQHandler(&hdma_usart6_rx); }
+
+void DMA2_Stream3_IRQHandler(void) { HAL_DMA_IRQHandler(&hdma_tim8_ch2); }
+
+/**
+ * @brief This function handles USART6 global interrupt.
+ */
+void USART6_IRQHandler(void) {
+  // 调用自己写的callback
+  HAL_UART_IRQHandler(&huart6);
+  HAL_UART_IDLE_Callback(&huart6);
 }
 
 /* USER CODE BEGIN 1 */

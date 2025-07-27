@@ -25,7 +25,8 @@ extern "C" {
 #include "bsp_gpio.h"
 #include "bsp_spi.h"
 #include "bsp_tim.h"
-
+#include "encoder_app.h"
+#include "ws2812led_app.h"
 /*----------------------------------function----------------------------------*/
 void BSP_Init(void) {
   /* 初始化esc 复位io */
@@ -58,6 +59,7 @@ void BSP_Init(void) {
                   CanFilter_0 | CanFifo_0 | Can_STDID | Can_DataType, 0, 0);
   CAN_Filter_Init(&CAN0_Handle,
                   CanFilter_1 | CanFifo_1 | Can_STDID | Can_DataType, 0, 0);
+  configWatchdog(2000, false);
 
 #ifndef ONLY_CAN0
   // 使用扩展帧
@@ -66,7 +68,16 @@ void BSP_Init(void) {
                   CanFilter_14 | CanFifo_0 | Can_EXTID | Can_DataType, 0, 0);
   CAN_Filter_Init(&CAN1_Handle,
                   CanFilter_15 | CanFifo_1 | Can_EXTID | Can_DataType, 0, 0);
+  configWatchdog(2000, true);
+
 #endif
+
+  // 测试串口驱动
+  Encoder_Device_Init();
+
+  WS2812_Init();
+
+  ShooterIO_Configuration();
 }
 
 #ifdef __cplusplus

@@ -44,6 +44,10 @@ float cur_can1_rx_time = 0.0f;       // 本次can1看门狗时间
 float can1_watchdog_timeout = 0.0f;  // can1看门狗超时时间，单位ms
 #endif
 
+// can总线报警标志位
+bool can0_no_msg = false;
+bool can1_no_msg = false;
+
 // can hal层 初始化
 void CAN_Configuration(CAN_HandleTypeDef* hcan) {
   if (hcan == &CAN0_Handle) {
@@ -56,7 +60,7 @@ void CAN_Configuration(CAN_HandleTypeDef* hcan) {
     CAN0_Handle.Init.TimeTriggeredMode = DISABLE;
     CAN0_Handle.Init.AutoBusOff = ENABLE;
     CAN0_Handle.Init.AutoWakeUp = DISABLE;
-    CAN0_Handle.Init.AutoRetransmission = ENABLE;
+    CAN0_Handle.Init.AutoRetransmission = DISABLE;
     CAN0_Handle.Init.ReceiveFifoLocked = DISABLE;
     CAN0_Handle.Init.TransmitFifoPriority = DISABLE;
     if (HAL_CAN_Init(&CAN0_Handle) != HAL_OK) {
@@ -73,7 +77,7 @@ void CAN_Configuration(CAN_HandleTypeDef* hcan) {
     CAN1_Handle.Init.TimeTriggeredMode = DISABLE;
     CAN1_Handle.Init.AutoBusOff = ENABLE;
     CAN1_Handle.Init.AutoWakeUp = DISABLE;
-    CAN1_Handle.Init.AutoRetransmission = ENABLE;
+    CAN1_Handle.Init.AutoRetransmission = DISABLE;
     CAN1_Handle.Init.ReceiveFifoLocked = DISABLE;
     CAN1_Handle.Init.TransmitFifoPriority = DISABLE;
     if (HAL_CAN_Init(&CAN1_Handle) != HAL_OK) {
@@ -224,9 +228,11 @@ __weak void CAN_TxHeader_Init(void) {
 
 void configWatchdog(float timeout, bool ifCan1) {
   if (ifCan1 != true) {
+    start_can0_watchdog = true;
     can0_watchdog_timeout = timeout;  // can0看门狗超时时间
   } else {
 #ifndef ONLY_CAN0
+    start_can1_watchdog = true;
     can1_watchdog_timeout = timeout;  // can1看门狗超时时间
 #endif
   }
@@ -302,14 +308,8 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan) {
         HAL_ERROR) {
     };
     CAN0_RxCpltCallback(hcan, &temp_rxheader, temp_rxdata);
-    cur_can0_rx_time = DWT_GetTimeline_ms();  // 更新can0接收时间
-    if (cur_can0_rx_time - last_can0_rx_time > can0_watchdog_timeout) {
-      // 如果超过看门狗超时时间，则触发看门狗回调
-      if (start_can0_watchdog) {
-        CAN0_watchdogCallback();
-      }
-    }
-    last_can0_rx_time = cur_can0_rx_time;  // 更新上次接收时间
+    last_can0_rx_time = 0;  // 更新接收时间
+    can0_no_msg = false;
   }
 #ifndef ONLY_CAN0
   else if (hcan == &CAN1_Handle) {
@@ -317,14 +317,8 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan) {
         HAL_ERROR) {
     };
     CAN1_RxCpltCallback(hcan, &temp_rxheader, temp_rxdata);
-    cur_can1_rx_time = DWT_GetTimeline_ms();  // 更新can1接收时间
-    if (cur_can1_rx_time - last_can1_rx_time > can1_watchdog_timeout) {
-      // 如果超过看门狗超时时间，则触发看门狗回调
-      if (start_can1_watchdog) {
-        CAN1_watchdogCallback();
-      }
-    }
-    last_can1_rx_time = cur_can1_rx_time;  // 更新上次接收时间
+    last_can1_rx_time = 0;  // 更新上次接收时间
+    can1_no_msg = false;
   }
 #endif
 }
@@ -339,14 +333,8 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef* hcan) {
         HAL_ERROR) {
     };
     CAN0_RxCpltCallback(hcan, &temp_rxheader, temp_rxdata);
-    cur_can0_rx_time = DWT_GetTimeline_ms();  // 更新can0接收时间
-    if (cur_can0_rx_time - last_can0_rx_time > can0_watchdog_timeout) {
-      // 如果超过看门狗超时时间，则触发看门狗回调
-      if (start_can0_watchdog) {
-        CAN0_watchdogCallback();
-      }
-    }
-    last_can0_rx_time = cur_can0_rx_time;  // 更新上次接收时间
+    can0_no_msg = false;
+    last_can0_rx_time = 0;  // 更新接收时间
   }
 #ifndef ONLY_CAN0
   else if (hcan == &CAN1_Handle) {
@@ -354,14 +342,8 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef* hcan) {
         HAL_ERROR) {
     };
     CAN1_RxCpltCallback(hcan, &temp_rxheader, temp_rxdata);
-    cur_can1_rx_time = DWT_GetTimeline_ms();  // 更新can1接收时间
-    if (cur_can1_rx_time - last_can1_rx_time > can1_watchdog_timeout) {
-      // 如果超过看门狗超时时间，则触发看门狗回调
-      if (start_can1_watchdog) {
-        CAN1_watchdogCallback();
-      }
-    }
-    last_can1_rx_time = cur_can1_rx_time;  // 更新上次接收时间
+    can1_no_msg = false;
+    last_can1_rx_time = 0;  // 更新上次接收时间
   }
 #endif
 }
@@ -374,6 +356,11 @@ uint32_t alst_error = 0;
 uint32_t relive_times = 0;  // 重启次数
 uint32_t ack_error = 0;     // ack错误次数
 uint32_t in_error = 0;
+/**
+ * @brief can总线错误回调
+ *
+ * @param hcan
+ */
 void HAL_CAN_ErrorCallback(CAN_HandleTypeDef* hcan) {
   // todo: 可以在这里记录日志到什么地方？然后事后可以读取日志
 
@@ -437,6 +424,31 @@ void CAN_AppRestart(CAN_HandleTypeDef* hcan) {
                     0, 0);
     CAN_Filter_Init(hcan, CanFilter_15 | CanFifo_1 | Can_EXTID | Can_DataType,
                     0, 0);
+  }
+
+#endif
+  // 初始化接收时间，保证看门狗检测有依据
+  if (hcan == &CAN0_Handle) {
+  }
+#ifndef ONLY_CAN0
+  else if (hcan == &CAN1_Handle) {
+  }
+#endif
+}
+
+// 新增周期性检测函数，建议在主循环或者定时器中调用
+void CAN_Watchdog_Task() {
+  // 检测can0看门狗
+  last_can0_rx_time++;
+  if (start_can0_watchdog && (last_can0_rx_time > can0_watchdog_timeout)) {
+    CAN0_watchdogCallback();
+  }
+#ifndef ONLY_CAN0
+  // 检测can1看门狗
+  last_can1_rx_time++;
+  if (start_can1_watchdog && (last_can1_rx_time > can1_watchdog_timeout)) {
+    CAN1_watchdogCallback();
+    // 更新上次接收时间
   }
 #endif
 }

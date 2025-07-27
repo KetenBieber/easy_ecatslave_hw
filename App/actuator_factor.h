@@ -26,6 +26,15 @@ extern "C" {
 #define PI 3.141592653f                           // 圆周率
 #define DJI_ENCODER_ANGLE_RATIO 2 * PI / 8192.0f  // 大疆电机编码器角度比
 
+/* vesc relative */
+#define CAN_PACKET_STATUS 9  // 电流&转速 接收数据包标识符
+// 控制命令枚举
+#define CAN_CMD_SET_CURRENT 0x01
+#define CAN_CMD_SET_ERPM 0x03
+#define CAN_CMD_SET_BRAKE 0x02
+
+#define BRAKE_CURRENT 6000  // 刹车电流
+
 /*----------------------------------typedef-----------------------------------*/
 
 typedef union {
